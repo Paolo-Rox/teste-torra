@@ -1,0 +1,391 @@
+factory: dbt_factory
+
+fields:
+
+  # ============================================================
+  # CAMPOS GERAIS
+  # ============================================================
+
+  - name: name
+    label: "Nome"
+    type: text
+    required: true
+    description: "Nome da DAG."
+
+  - name: description
+    label: "Descrição"
+    type: text
+    required: false
+    description: "Descrição da finalidade da DAG."
+
+  - name: execution_type
+    label: "Tipo de execução"
+    type: select
+    required: true
+    options:
+      - delta
+      - datamarts
+      - dbt_file_generation
+    description: "Define o fluxo de execução utilizado pelo DBT Factory."
+
+  - name: owner
+    label: "Owner"
+    type: text
+    required: true
+    default: "Engenharia"
+    description: "Responsável pela DAG.Caso não seja indicado será por padrão Engenharia"
+
+  - name: schedule
+    label: "Schedule"
+    type: text
+    required: false
+    description: "Agendamento ou origem de dados utilizada pela DAG."
+
+  - name: start_date
+    label: "Data de início"
+    type: date
+    required: true
+    description: "Data a partir da qual a DAG poderá ser executada."
+
+  - name: tags
+    label: "Tags"
+    type: text
+    required: false
+    description: "Tags utilizadas para identificar e organizar a DAG."
+  # ============================================================
+  #    DATAMARTS
+  # ============================================================
+  - name: limit_time
+    label: "Horário limite"
+    type: time
+    required: false
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Horário utilizado para controlar a execução."
+
+  - name: tabelas_para_checar
+    label: "Tabelas para verificar"
+    type: text_list
+    required: false
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Lista de tabelas que devem ser verificadas antes da execução."
+  # ============================================================
+  # GIT
+  # ============================================================
+
+  - name: git_repo_schema
+    label: "Git Repository Schema"
+    type: text
+    required: true
+    visible_when:
+      execution_type:
+        - delta
+        - datamarts
+    description: "Schema onde o Git Repository está registrado."
+
+  - name: git_repo_name
+    label: "Git Repository Name"
+    type: text
+    required: true
+    visible_when:
+      execution_type:
+        - delta
+        - datamarts
+    description: "Nome do Git Repository utilizado pela DAG."
+
+  - name: git_repo_path
+    label: "Git Repository Path"
+    type: text
+    required: false
+    visible_when:
+      execution_type:
+        - delta
+        - datamarts
+    description: "Caminho dentro do repositório Git utilizado pelo DBT Project."
+
+  - name: git_version_control
+    label: "Git Version Control"
+    type: object
+    required: false
+    visible_when:
+      execution_type:
+        - delta
+        - datamarts
+    description: "Configuração de controle de versão do Git."
+
+
+  # ============================================================
+  # DBT
+  # ============================================================
+
+  - name: dbt_project
+    label: "DBT Project"
+    type: text
+    required: true
+    visible_when:
+      execution_type:
+        - delta
+        - datamarts
+    description: "Nome completo do DBT Project utilizado pela DAG.(ex: TACC.TN.DAG_DATAMARTS)"
+
+  - name: dbt_env
+    label: "DBT Environment"
+    type: select
+    required: true
+    options:
+      - dev
+      - prd
+    default: dev
+    visible_when:
+      execution_type:
+        - delta
+        - datamarts
+    description: "Ambiente utilizado na execução do DBT."
+
+
+  # ============================================================
+  # DELTA
+  # ============================================================
+
+  - name: delta_hours
+    label: "Delta Hours"
+    type: number
+    required_when:
+      execution_type:
+        - delta
+    visible_when:
+      execution_type:
+        - delta
+    min: 1
+    description: "Quantidade de horas utilizada no processamento Delta."
+
+  - name: module_name
+    label: "Module Name"
+    type: text
+    required_when:
+      execution_type:
+        - delta
+    visible_when:
+      execution_type:
+        - delta
+    description: "Nome do módulo relacionado à execução."
+
+  - name: send_delta_alert
+    label: "Enviar alerta Delta"
+    type: boolean
+    required: false
+    default: false
+    visible_when:
+      execution_type:
+        - delta
+    description: "Define se alertas relacionados ao Delta serão enviados."
+
+  - name: use_plus_selector
+    label: "Usar Plus Selector"
+    type: boolean
+    required: false
+    default: false
+    visible_when:
+      execution_type:
+        - delta
+    description: "Adiciona o prefixo '+' aos seletores DBT."
+
+  - name: pipes
+    label: "Pipes"
+    type: object_list
+    required_when:
+      execution_type:
+        - delta
+    visible_when:
+      execution_type:
+        - delta
+    description: "Configuração das tabelas e domínios utilizados pelo processamento Delta."
+
+    item_fields:
+
+      - name: table
+        label: "Tabela"
+        type: text
+        required: true
+
+      - name: schema
+        label: "Schema"
+        type: text
+        required: true
+
+      - name: domain
+        label: "Domínio"
+        type: multiselect_text
+        required: false
+
+  # ============================================================
+  # DEPENDÊNCIAS DATAMARTS
+  # ============================================================
+
+  - name: dbt_test_dependency
+    label: "Utilizar o DBT Test"
+    type: boolean
+    required: false
+    default: false
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Define se o DBT Test deve ser tratado como dependência obrigatória."
+
+  - name: dbt_run_profile
+    label: "Utilizar o DBT Run"
+    type: boolean
+    required: false
+    default: false
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Define se a etapa DBT Profile será executada."
+
+  - name: git_fetch_dependency
+    label: "Utilizar o Git Fetch"
+    type: boolean
+    required: false
+    default: true
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Define se a etapa de Git Fetch será executada."
+
+  - name: check_version_dependency
+    label: "Utilizar o Check Version"
+    type: boolean
+    required: false
+    default: true
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Define se a verificação da versão do Git será executada."
+
+  - name: update_version_dependency
+    label: "Utilizar o Update Version"
+    type: boolean
+    required: false
+    default: true
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Define se a atualização da versão do DBT Project será executada."
+
+
+  # ============================================================
+  # DBT COMMANDS
+  # ============================================================
+
+  - name: dbt_run
+    label: "DBT Run"
+    type: command_list
+    required: false
+    visible_when:
+      execution_type:
+        - datamarts
+        - dbt_file_generation
+    description: "Comandos executados na etapa DBT Run."
+
+
+  - name: dbt_test
+    label: "DBT Test"
+    type: command_list
+    required: false
+    visible_when:
+      execution_type:
+        - datamarts
+        - dbt_file_generation
+    description: "Comandos executados na etapa DBT Test."
+
+
+  - name: dbt_profile
+    label: "DBT Profile"
+    type: command_list
+    required: false
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Comandos executados na etapa DBT Profile."
+
+
+  # ============================================================
+  # DATAMARTS - OUTPUT / QLIK
+  # ============================================================
+
+  - name: outlets_dataset
+    label: "Outlets Dataset"
+    type: text
+    required: false
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Dataset utilizado como outlet da DAG."
+
+  - name: qlik_automation
+    label: "Qlik Automation"
+    type: object
+    required: false
+    visible_when:
+      execution_type:
+        - datamarts
+    description: "Configuração da automação Qlik."
+
+    fields:
+
+      - name: enabled
+        label: "Habilitado"
+        type: boolean
+        required: false
+        default: false
+
+      - name: automation_id
+        label: "Automation ID"
+        type: text
+        required_when:
+          enabled: true
+
+      - name: execution_token
+        label: "Execution Token"
+        type: secret
+        required_when:
+          enabled: true
+
+
+  # ============================================================
+  # DBT FILE GENERATION
+  # ============================================================
+
+  - name: streams_para_checar
+    label: "Streams para verificar"
+    type: text_list
+    required: false
+    visible_when:
+      execution_type:
+        - dbt_file_generation
+    description: "Lista de streams que serão verificados."
+
+  - name: stream_schema
+    label: "Stream Schema"
+    type: text
+    required_when:
+      execution_type:
+        - dbt_file_generation
+    visible_when:
+      execution_type:
+        - dbt_file_generation
+    description: "Schema onde estão os streams utilizados."
+
+
+  - name: file_generation
+    label: "File Generation"
+    type: command_list
+    required: false
+    visible_when:
+      execution_type:
+        - dbt_file_generation
+    description: "Comandos executados para geração do arquivo."
+
