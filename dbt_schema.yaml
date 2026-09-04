@@ -164,6 +164,9 @@ fields:
     label: "Module Name"
     type: text
     required: true
+    required_when:
+      execution_type:
+        - delta
     visible_when:
       execution_type:
         - delta

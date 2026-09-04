@@ -1,7 +1,104 @@
 import streamlit as st 
 import yaml
+import base64
+import requests
+import re
 
 #------------- FUNÇÕES
+
+def github_headers(token):
+    return {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2026-03-10",
+    }
+
+def verificar_configs_yaml(owner, repo, branch, token):
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/configs_yaml"
+
+    response = requests.get(
+        url,
+        headers=github_headers(token),
+        params={"ref": branch},
+        timeout=20
+    )
+
+    if response.status_code == 200:
+        return True
+
+    if response.status_code == 404:
+        return False
+
+    raise RuntimeError(
+        f"Erro ao verificar configs_yaml: "
+        f"{response.status_code} - {response.text}"
+    )
+
+def salvar_yaml_github(
+    yaml_string,
+    owner,
+    repo,
+    branch,
+    nome_arquivo,
+    token
+):
+    caminho = f"configs_yaml/{nome_arquivo}"
+
+    url = (
+        f"https://api.github.com/repos/"
+        f"{owner}/{repo}/contents/{caminho}"
+    )
+
+    headers = github_headers(token)
+
+    # Verifica se o arquivo já existe
+    response_get = requests.get(
+        url,
+        headers=headers,
+        params={"ref": branch},
+        timeout=20
+    )
+
+    sha = None
+
+    if response_get.status_code == 200:
+        sha = response_get.json()["sha"]
+
+    elif response_get.status_code != 404:
+        raise RuntimeError(
+            f"Erro ao verificar arquivo: "
+            f"{response_get.status_code} - {response_get.text}"
+        )
+
+    # Converte YAML para Base64
+    conteudo_base64 = base64.b64encode(
+        yaml_string.encode("utf-8")
+    ).decode("utf-8")
+
+    payload = {
+        "message": f"feat: adicionar {nome_arquivo}",
+        "content": conteudo_base64,
+        "branch": branch
+    }
+
+    # Se já existe, GitHub exige o SHA
+    if sha:
+        payload["sha"] = sha
+
+    response_put = requests.put(
+        url,
+        headers=headers,
+        json=payload,
+        timeout=20
+    )
+
+    if response_put.status_code not in (200, 201):
+        raise RuntimeError(
+            f"Erro ao salvar YAML no GitHub: "
+            f"{response_put.status_code} - {response_put.text}"
+        )
+
+    return response_put.json()
 
 def load_schema(caminho):
 
@@ -9,7 +106,7 @@ def load_schema(caminho):
 
         return yaml.safe_load(arquivo)
 
-def create_field(field):
+def create_field(field,prefix=""):
 
     nome = field["name"]
 
@@ -22,7 +119,7 @@ def create_field(field):
     description = field.get("description")
     placeholder = field.get("placeholder")
 
-    key = f"input_{nome}"
+    key = f"{prefix}input_{nome}" if prefix else f"input_{nome}"
     val_atual = st.session_state.get(key, default)
     badge_html = get_badge_html(field, val_atual)
     label_html = f'<div style="font-size: 14px; font-weight: 500; margin-bottom: 6px;">{label} {badge_html}</div>'
@@ -130,14 +227,14 @@ def create_field(field):
             table_field = next(
                 f for f in item_fields
                 if f["name"] == "table")
-            _, table = create_field(table_field)
+            _, table = create_field(table_field, prefix=f"{key}_{i}_")
             item["table"] = table
 
             schema_field = next(
                 f for f in item_fields
                 if f["name"] == "schema")
 
-            _, schema = create_field(schema_field)
+            _, schema = create_field(schema_field,prefix=f"{key}_{i}_")
             item["schema"] = schema
 
             use_domain = st.checkbox(
@@ -221,7 +318,8 @@ def validate_fields(schema,values):
     erros = []
 
     for field in schema["fields"]:
-
+        if not campo_visivel(field, values):
+            continue
         nome = field["name"]
         if nome not in values:
             continue
@@ -287,6 +385,8 @@ def get_badge_html(field, value):
 
 #------------- CONFIGURAÇÕES
 dbt_schema = load_schema("dbt_schema.yaml")
+
+GITHUB_TOKEN = "TU_TOKEN"
 
 campos_basicos = [
     "name",
@@ -700,10 +800,8 @@ with aba1:
                     st.toast("Parâmetros salvos! Carregando Análise Final...", icon="🚀")
                     st.session_state["etapa_dbt"] = 3
                     st.rerun()
-        #--------- step 3
-        if st.session_state["etapa_dbt"] == 3:
-            st.subheader("Analise final")
 
+    #--------- step 3
     es_etapa3_activa = st.session_state["etapa_dbt"] == 3
     with st.expander("3. Analise final", expanded=es_etapa3_activa):
         if st.session_state["etapa_dbt"] < 3:
@@ -712,120 +810,215 @@ with aba1:
             if st.session_state["etapa_dbt"] < 3:
                 st.info("🔒 Complete a Etapa 1 e Etapa 2 para habilitar esta seção.")
             else:
-                    st.markdown('<div class="step-title">Revisão e Confirmação</div>', unsafe_allow_html=True)
-                    st.markdown('<div style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">Verifique os dados antes de gerar a DAG.</div>', unsafe_allow_html=True)
+                
+                st.markdown('<div class="step-title">Revisão e Confirmação</div>', unsafe_allow_html=True)
+                st.markdown('<div style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">Verifique os dados antes de gerar a DAG.</div>', unsafe_allow_html=True)
 
-                    # 1. Recopilar todos los datos del session_state basado en el dbt_schema
-                    dados_finais = {}
-                    for f in dbt_schema["fields"]:
-                        nome_campo = f["name"]
-                        key_state = f"input_{nome_campo}"
-                        if key_state in st.session_state:
-                            dados_finais[nome_campo] = st.session_state[key_state]
-                        else:
-                            dados_finais[nome_campo] = f.get("default", None)
+                dados_finais = {}
+                for f in dbt_schema["fields"]:
+                    if not campo_visivel(f, values):
+                        continue
 
-                    # Para que el YAML se vea estructurado (ej. qlik_automation anidado), 
-                    # puedes organizar el diccionario aquí si tu esquema es plano. 
-                    # (Si tu esquema ya genera diccionarios anidados, omite este paso de formateo específico)
-                    yaml_dados = dados_finais.copy()
-                    if "qlik_enabled" in yaml_dados: # Ejemplo de cómo anidar si tus inputs son planos
-                        yaml_dados["qlik_automation"] = {
-                            "enabled": yaml_dados.pop("qlik_enabled", False),
-                            "automation_id": yaml_dados.pop("qlik_automation_id", ""),
-                            "execution_token": yaml_dados.pop("qlik_execution_token", "")
-                        }
-
-                    # 2. Selector de visualización
-                    opcao_visao = st.radio(
-                        "Selecione a forma de visualização:",
-                        ["📊 Visão Resumo (Negócio)", "⚙️ Visão Código (Técnica)"],
-                        horizontal=True,
-                        label_visibility="collapsed"
-                    )
+                    nome_campo = f["name"]
+                    tipo = f["type"]
                     
-                    st.markdown("<hr style='margin: 10px 0 20px 0; border-color: #334155;'>", unsafe_allow_html=True)
+                    # Tomamos el valor directamente del diccionario values
+                    valor = values.get(nome_campo)
 
-                    if opcao_visao == "📊 Visão Resumo (Negócio)":
-                        # --- VISÃO BONITA / NEGÓCIO ---
-                        
-                        # Fila de métricas principales
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            st.markdown(f"""
-                            <div style="background-color: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #1e293b; height: 100%;">
-                                <p style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">NOME DA DAG</p>
-                                <p style="color: #f8fafc; font-size: 16px; font-weight: 600; margin: 0;">{dados_finais.get('name', '-')}</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        with col2:
-                            st.markdown(f"""
-                            <div style="background-color: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #1e293b; height: 100%;">
-                                <p style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">TIPO DE EXECUÇÃO</p>
-                                <p style="color: #38bdf8; font-size: 16px; font-weight: 600; margin: 0;">{dados_finais.get('execution_type', '-')}</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        with col3:
-                            st.markdown(f"""
-                            <div style="background-color: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #1e293b; height: 100%;">
-                                <p style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">OWNER</p>
-                                <p style="color: #f8fafc; font-size: 16px; font-weight: 600; margin: 0;">{dados_finais.get('owner', '-')}</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
-                        st.write("") # Espaciador
-                        
-                        # Segunda fila de detalles
+                    if tipo == "text_list" and isinstance(valor, str):
+                        valor = [linha.strip() for linha in valor.splitlines() if linha.strip()]
+                    elif tipo in ["date", "time"] and valor is not None:
+                        valor = str(valor)
+        
+                    if valor is not None and valor != "" and valor != [] and valor != {}:
+                        dados_finais[nome_campo] = valor
+
+                yaml_dados = dados_finais.copy()
+
+                # 3. Selector de visualización profissional
+                opcao_visao = st.radio(
+                    "Selecione a forma de visualização:",
+                    ["Visão Consolidada", "Estrutura YAML"],
+                    horizontal=True,
+                    label_visibility="collapsed"
+                )
+                
+                st.markdown("<hr style='margin: 10px 0 20px 0; border-color: #334155;'>", unsafe_allow_html=True)
+
+                if opcao_visao == "Visão Consolidada":
+
+                    campos_principais = ["name", "execution_type", "owner"]
+                    cols_activas = [c for c in campos_principais if c in dados_finais]
+                    
+                    if cols_activas:
+                        cols = st.columns(len(cols_activas))
+                        labels_map = {
+                            "name": "NOME DA DAG", 
+                            "execution_type": "TIPO DE EXECUÇÃO", 
+                            "owner": "PROPRIETÁRIO"
+                        }
+                        for idx, campo in enumerate(cols_activas):
+                            with cols[idx]:
+                                color_val = "#38bdf8" if campo == "execution_type" else "#f8fafc"
+                                st.markdown(f"""
+                                <div style="background-color: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #1e293b; height: 100%;">
+                                    <p style="color: #94a3b8; font-size: 11px; margin-bottom: 5px; font-weight: 600;">{labels_map.get(campo, campo.upper())}</p>
+                                    <p style="color: {color_val}; font-size: 15px; font-weight: 600; margin: 0;">{dados_finais[campo]}</p>
+                                </div>
+                                """, unsafe_allow_html=True)
+                        st.write("")
+
+                    detalles_map = {
+                        "schedule": "Agendamento (Schedule)",
+                        "tags": "Tags",
+                        "description": "Descrição",
+                        "start_date": "Início (Start Date)",
+                        "limit_time": "Tempo Limite (Limit Time)",
+                        "dbt_env": "Ambiente (Env)"
+                    }
+
+                    campos_complejos = ['tabelas_para_checar', 'dbt_run', 'dbt_test', 'dbt_profile', 'qlik_automation', 'pipes']
+                    campos_ignorados = set(campos_principais + campos_complejos)
+                    detalhes_existentes = [
+                        k for k, v in dados_finais.items() 
+                        if k not in campos_ignorados and not isinstance(v, bool)
+                    ]
+
+                    if detalhes_existentes:
                         col_det1, col_det2 = st.columns(2)
+                        mitad = (len(detalhes_existentes) + 1) // 2
+                        
                         with col_det1:
-                            st.markdown("**📅 Agendamento (Schedule):** " + str(dados_finais.get('schedule', '-')))
-                            st.markdown("**🏷️ Tags:** " + ", ".join(dados_finais.get('tags', [])))
-                            st.markdown("**📝 Descrição:** " + str(dados_finais.get('description', '-')))
+                            for k in detalhes_existentes[:mitad]:
+                                val = dados_finais[k]
+                                val_str = ", ".join(val) if isinstance(val, list) else str(val)
+                                label_text = detalles_map.get(k, k.replace('_', ' ').title())
+                                st.markdown(f"**{label_text}:** {val_str}")
                         
                         with col_det2:
-                            st.markdown("**▶️ Início (Start Date):** " + str(dados_finais.get('start_date', '-')))
-                            st.markdown("**⏳ Tempo Limite (Limit Time):** " + str(dados_finais.get('limit_time', '-')))
-                            st.markdown("**🌍 Ambiente (Env):** " + str(dados_finais.get('dbt_env', '-')))
+                            for k in detalhes_existentes[mitad:]:
+                                val = dados_finais[k]
+                                val_str = ", ".join(val) if isinstance(val, list) else str(val)
+                                label_text = detalles_map.get(k, k.replace('_', ' ').title())
+                                st.markdown(f"**{label_text}:** {val_str}")
 
-                        # Renderizar listas anchas (ej. tabelas_para_checar)
-                        tabelas = dados_finais.get('tabelas_para_checar', [])
-                        if tabelas:
-                            st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>📋 Tabelas Mapeadas:</div>", unsafe_allow_html=True)
-                            tabelas_html = "".join([f"<span style='display: inline-block; background: #1e293b; padding: 4px 10px; margin: 4px; border-radius: 4px; font-size: 12px; color: #94a3b8;'>{t}</span>" for t in tabelas])
-                            st.markdown(f"<div>{tabelas_html}</div>", unsafe_allow_html=True)
+                    tabelas = dados_finais.get('tabelas_para_checar', [])
+                    if tabelas:
+                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Tabelas Mapeadas:</div>", unsafe_allow_html=True)
+                        tabelas_html = "".join([f"<span style='display: inline-block; background: #1e293b; padding: 4px 10px; margin: 4px 4px 4px 0; border-radius: 4px; font-size: 12px; color: #94a3b8;'>{t}</span>" for t in tabelas])
+                        st.markdown(f"<div>{tabelas_html}</div>", unsafe_allow_html=True)
+                    
+                    # IMPORTANTE: Ahora esto está FUERA de la validación "if tabelas:"
+                    for cmd_key in ['dbt_run', 'dbt_test', 'dbt_profile']:
+                        if cmd_key in dados_finais:
+                            st.markdown(f"<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>{cmd_key.upper().replace('_', ' ')}:</div>", unsafe_allow_html=True)
+                            for item in dados_finais[cmd_key]:
+                                st.code(f"id: {item.get('id', '')}\ncmd: {item.get('cmd', '')}", language="yaml")
+                    
+                    if 'qlik_automation' in dados_finais:
+                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Qlik Automation:</div>", unsafe_allow_html=True)
+                        st.json(dados_finais['qlik_automation'])
 
-                        # Renderizar dependencias (booleans)
-                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>⚙️ Dependências Ativas:</div>", unsafe_allow_html=True)
+                    bools = {k: v for k, v in dados_finais.items() if isinstance(v, bool)}
+                    if bools:
+                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Dependências e Parâmetros:</div>", unsafe_allow_html=True)
                         booleans_html = ""
-                        for k, v in dados_finais.items():
-                            if isinstance(v, bool):
-                                icon = "✅" if v else "❌"
-                                color = "#4ade80" if v else "#f87171"
-                                booleans_html += f"<div style='margin: 4px 0;'><span style='color: {color};'>{icon}</span> <span style='color: #94a3b8; font-size: 14px;'>{k}</span></div>"
+                        for k, v in bools.items():
+                            status_str = "Ativo" if v else "Inativo"
+                            color = "#4ade80" if v else "#f87171"
+                            booleans_html += f"<div style='margin: 4px 0;'><span style='color: {color}; font-weight: 600;'>[{status_str}]</span> <span style='color: #94a3b8; font-size: 14px;'>{k}</span></div>"
                         st.markdown(f"<div>{booleans_html}</div>", unsafe_allow_html=True)
 
-                    else:
-                        # --- VISÃO TÉCNICA / YAML ---
-                        # Convertimos el diccionario a un string YAML limpio
-                        yaml_string = yaml.dump(yaml_dados, sort_keys=False, default_flow_style=False, allow_unicode=True)
-                        
-                        st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Este é o payload final que será enviado/salvo:</div>', unsafe_allow_html=True)
-                        # Usamos st.code para que tenga el botón de "Copiar" y sintaxis coloreada
-                        st.code(yaml_string, language="yaml")
+                else:
+                    yaml_string = yaml.dump(yaml_dados, sort_keys=False, default_flow_style=False, allow_unicode=True)
+                    st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Configuração final compilada:</div>', unsafe_allow_html=True)
+                    st.code(yaml_string, language="yaml")
 
-                    # Botones Finales
-                    st.markdown("<hr style='margin: 20px 0; border-color: #334155;'>", unsafe_allow_html=True)
-                    col_b1, col_b2, col_b3 = st.columns([1, 1, 2])
-                    
-                    with col_b1:
-                        if st.button("← Voltar à Etapa 2", use_container_width=True):
-                            st.session_state["etapa_dbt"] = 2
-                            st.rerun()
-                    
-                    with col_b3:
-                        if st.button("🚀 Confirmar e Gerar DAG", type="primary", use_container_width=True):
-                            st.success("DAG gerada com sucesso!")
+                st.markdown("<hr style='margin: 20px 0; border-color: #334155;'>", unsafe_allow_html=True)
+                col_b1, col_b2, col_b3 = st.columns([1, 1, 2])
+                
+                with col_b1:
+                    if st.button("Voltar à Etapa 2", use_container_width=True):
+                        st.session_state["etapa_dbt"] = 2
+                        st.rerun()
+                
+                with col_b3:
+                    if st.button("Confirmar e Gerar DAG", type="primary", use_container_width=True):
+                        try:
+                            owner = "Paolo-Rox"
+                            repo = "teste-torra"
+                            branch = "main"
+
+                            token = st.secrets["GITHUB_TOKEN"]
+
+                            # --------------------------------
+                            # 1. Verificar configs_yaml
+                            # --------------------------------
+
+                            configs_existe = verificar_configs_yaml(
+                                owner=owner,
+                                repo=repo,
+                                branch=branch,
+                                token=token
+                            )
+
+                            if configs_existe:
+                                st.info(
+                                    "A pasta configs_yaml já existe. "
+                                    "O arquivo será salvo nela."
+                                )
+                            else:
+                                st.info(
+                                    "A pasta configs_yaml não existe. "
+                                    "Ela será criada automaticamente."
+                                )
+
+                            # --------------------------------
+                            # 2. Nome do arquivo
+                            # --------------------------------
+
+                            nome_dag = dados_finais["name"]
+
+                            nome_seguro = re.sub(
+                                r"[^A-Za-z0-9_.-]+",
+                                "_",
+                                nome_dag
+                            )
+
+                            nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
+
+                            # --------------------------------
+                            # 3. Salvar no GitHub
+                            # --------------------------------
+
+                            resultado = salvar_yaml_github(
+                                yaml_string=yaml_string,
+                                owner=owner,
+                                repo=repo,
+                                branch=branch,
+                                nome_arquivo=nome_arquivo,
+                                token=token
+                            )
+
+                            # --------------------------------
+                            # 4. Sucesso
+                            # --------------------------------
+
+                            arquivo_url = resultado["content"]["html_url"]
+                            st.success(
+                                "DAG gerada e enviada ao GitHub com sucesso!"
+                            )
+
+                            st.link_button(
+                                "Abrir YAML no GitHub",
+                                arquivo_url
+                            )
+
                             st.balloons()
+                        except Exception as e:
+                            st.error(
+                                f"Não foi possível enviar o YAML para o GitHub: {e}"
+                            )
 
 
 
