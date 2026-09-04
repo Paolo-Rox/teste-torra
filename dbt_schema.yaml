@@ -11,12 +11,14 @@ fields:
     type: text
     required: true
     description: "Nome da DAG."
+    placeholder: "ex: dbt_config_datamarts.yaml"
 
   - name: description
     label: "Descrição"
-    type: text
+    type: text_area
     required: false
     description: "Descrição da finalidade da DAG."
+    placeholder: "Escreva aqui uma breve descrição sobre o que esta DAG faz..."
 
   - name: execution_type
     label: "Tipo de execução"
@@ -34,12 +36,14 @@ fields:
     required: true
     default: "Engenharia"
     description: "Responsável pela DAG.Caso não seja indicado será por padrão Engenharia"
+    placeholder: "Engenharia"
 
   - name: schedule
     label: "Schedule"
     type: text
     required: false
     description: "Agendamento ou origem de dados utilizada pela DAG."
+    placeholder: "0 0 * * *"
 
   - name: start_date
     label: "Data de início"
@@ -52,6 +56,7 @@ fields:
     type: text
     required: false
     description: "Tags utilizadas para identificar e organizar a DAG."
+    placeholder: "ex: [Homologação,Datamarts,Snowflake,dbt]"
   # ============================================================
   #    DATAMARTS
   # ============================================================
@@ -85,6 +90,7 @@ fields:
         - delta
         - datamarts
     description: "Schema onde o Git Repository está registrado."
+    placeholder: "ex: TACC.DATAMARTS"
 
   - name: git_repo_name
     label: "Git Repository Name"
@@ -95,6 +101,7 @@ fields:
         - delta
         - datamarts
     description: "Nome do Git Repository utilizado pela DAG."
+    placeholder: "ex: GIT_REPO_TN"
 
   - name: git_repo_path
     label: "Git Repository Path"
@@ -105,17 +112,7 @@ fields:
         - delta
         - datamarts
     description: "Caminho dentro do repositório Git utilizado pelo DBT Project."
-
-  - name: git_version_control
-    label: "Git Version Control"
-    type: object
-    required: false
-    visible_when:
-      execution_type:
-        - delta
-        - datamarts
-    description: "Configuração de controle de versão do Git."
-
+    placeholder: "ex: TN/DAG_T_LOJAS"
 
   # ============================================================
   # DBT
@@ -129,7 +126,8 @@ fields:
       execution_type:
         - delta
         - datamarts
-    description: "Nome completo do DBT Project utilizado pela DAG.(ex: TACC.TN.DAG_DATAMARTS)"
+    description: "Nome completo do DBT Project utilizado pela DAG."
+    placeholder: "ex: TACC.TN.DAG_DATAMARTS"
 
   - name: dbt_env
     label: "DBT Environment"
@@ -165,9 +163,7 @@ fields:
   - name: module_name
     label: "Module Name"
     type: text
-    required_when:
-      execution_type:
-        - delta
+    required: true
     visible_when:
       execution_type:
         - delta
@@ -216,10 +212,19 @@ fields:
         type: text
         required: true
 
-      - name: domain
-        label: "Domínio"
-        type: multiselect_text
+      - name: use_domain
+        label: "Usar domínio"
+        type: boolean
+        default: false
         required: false
+
+      - name: domain_quantity
+        label: "Quantidade de domínios"
+        type:  number
+        default: 1
+        min: 1
+        required_when:
+          use_domain: true
 
   # ============================================================
   # DEPENDÊNCIAS DATAMARTS
@@ -236,7 +241,7 @@ fields:
     description: "Define se o DBT Test deve ser tratado como dependência obrigatória."
 
   - name: dbt_run_profile
-    label: "Utilizar o DBT Run"
+    label: "Utilizar o DBT Run Profile"
     type: boolean
     required: false
     default: false
@@ -299,6 +304,7 @@ fields:
       execution_type:
         - datamarts
         - dbt_file_generation
+      dbt_test_dependency : true
     description: "Comandos executados na etapa DBT Test."
 
 
@@ -309,6 +315,7 @@ fields:
     visible_when:
       execution_type:
         - datamarts
+      dbt_run_profile: true
     description: "Comandos executados na etapa DBT Profile."
 
 
@@ -324,6 +331,7 @@ fields:
       execution_type:
         - datamarts
     description: "Dataset utilizado como outlet da DAG."
+    placeholder: "ex: s3://snowflake-trus-ff/datasets/lista_dados.csv"
 
   - name: qlik_automation
     label: "Qlik Automation"
@@ -347,11 +355,15 @@ fields:
         type: text
         required_when:
           enabled: true
+        visible_when:
+          enabled: true
 
       - name: execution_token
         label: "Execution Token"
-        type: secret
+        type: text
         required_when:
+          enabled: true
+        visible_when:
           enabled: true
 
 
