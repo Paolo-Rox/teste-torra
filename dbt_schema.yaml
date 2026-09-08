@@ -11,7 +11,7 @@ fields:
     type: text
     required: true
     description: "Nome da DAG."
-    placeholder: "ex: dbt_config_datamarts.yaml"
+    placeholder: "ex: datamarts"
 
   - name: description
     label: "Descrição"
