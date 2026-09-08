@@ -1,0 +1,69 @@
+name: dbt_config_datamarts.yaml
+description: Executa modelos DBT Datamarts
+execution_type: datamarts
+owner: Engenharia
+start_date: '2026-09-08'
+tags:
+- Homologação
+- Datamarts
+- Snowflake
+- dbt
+limit_time: '14:44:00'
+tabelas_para_checar:
+- T_PAGAMENTO_FATURA
+- T_CLIENTE
+- T_VENDA
+- T_HISTORICO_LIMITE
+- T_LIMITE
+- T_CONTA
+- T_BLOQUEIO_CONTA
+- T_ENDERECO_RESIDENCIAL
+- T_RENDA
+- T_ANUIDADE_PRODUTO
+- T_FATURA
+- T_HISTORICO_ADESAO_ANUIDADE
+- T_PARAMETRO
+- T_TIPO_BLOQUEIO_CONTA
+- T_AJUSTE
+- T_FATURA_INFO
+- T_PARCELAMENTO_FATURA
+- T_PROCESSAMENTO
+- T_REDE
+- T_TIPO_AJUSTE
+- T_PARCELA_VENDA
+- T_ROLAGEM
+- T_PONTODEVENDA
+- T_USUARIO
+- T_SMILEGO_CLIENTE
+- T_SMILEGO_PROPOSTA
+- T_SMILEGO_USUARIO
+- T_KLOK_RESPOSTA
+- T_KLOK_PRODUTO
+- T_KLOK_PROVEDOR
+- T_KLOK_CANCELAMENTO
+- T_KLOK_ADESAO
+- T_KLOK_CONTRATANTE
+- T_CAPANA_PROPOSTA
+- T_FORMA_PAGAMENTO
+git_repo_schema: TACC.DATAMARTS
+git_repo_name: gy_repo_tn
+dbt_project: tacc,tg,tn_datamrts
+dbt_env: dev
+dbt_test_dependency: true
+dbt_run_profile: true
+git_fetch_dependency: false
+check_version_dependency: false
+update_version_dependency: false
+dbt_run:
+- id: datamarts
+  cmd: EXECUTE DBT PROJECT TACC.TN.DAG_DATAMARTS ARGS = 'run';
+dbt_test:
+- id: datamarts
+  cmd: EXECUTE DBT PROJECT TACC.TN.DAG_DATAMARTS ARGS = 'run';
+dbt_profile:
+- id: datamarts
+  cmd: EXECUTE DBT PROJECT TACC.TN.DAG_DATAMARTS ARGS = 'run';
+qlik_automation:
+  enabled: true
+  automation_id: 2s1cssv-5e1vw5v-qec8we1v8w
+  execution_token: wqfcqc2wv51ervb4ERa54bEAR4BRae4B654REB4ESB
