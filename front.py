@@ -982,9 +982,16 @@ with aba1:
                                 "_",
                                 nome_dag
                             )
-
+                            dados_finais["name"] = f"dbt_config_{nome_seguro}.yaml"
                             nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
-
+                            if "tags" in dados_finais:
+                                if isinstance(dados_finais["tags"], str):
+                                    texto_limpio = dados_finais["tags"].replace("[", "").replace("]", "").replace("'", "").replace('"', "")
+                                    dados_finais["tags"] = [t.strip() for t in texto_limpio.split(",") if t.strip()]
+                            yaml_string = yaml.dump(
+                                dados_finais, 
+                                sort_keys=False, 
+                                allow_unicode=True)
                             # --------------------------------
                             # 3. Salvar no GitHub
                             # --------------------------------
