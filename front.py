@@ -320,7 +320,7 @@ def validate_fields(schema,values):
     for field in schema["fields"]:
         if not campo_visivel(field, values):
             continue
-        nome = field[""]
+        nome = field["name"]
         if nome not in values:
             continue
         label = field.get("label", nome)
@@ -932,6 +932,8 @@ with aba1:
                         nome_original = str(dados_finais["name"])
                         if not nome_original.startswith("dbt_config_"):
                             dados_finais["name"] = f"dbt_config_{nome_original}"
+                    if "tags" in dados_finais and isinstance(dados_finais["tags"], list):
+                        dados_finais["tags"] = [str(tag).strip("'\" ") for tag in dados_finais["tags"]]
                     yaml_string = yaml.dump(yaml_dados, sort_keys=False, default_flow_style=False, allow_unicode=True)
                     st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Configuração final compilada:</div>', unsafe_allow_html=True)
                     st.code(yaml_string, language="yaml")
