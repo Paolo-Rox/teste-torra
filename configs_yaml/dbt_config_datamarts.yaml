@@ -1,0 +1,30 @@
+name: datamarts
+description: Executa modelos DBT Datamarts
+execution_type: datamarts
+owner: Engenharia
+start_date: '2026-09-08'
+tags: '[Homologação,Datamarts,Snowflake,dbt]'
+limit_time: '12:26:00'
+tabelas_para_checar:
+- t_lojas
+- t_aaa
+- t_bbb
+- t_ccc
+git_repo_schema: TACC.DATAMARTS
+git_repo_name: TACC.DATAMARTSTACC.DATAMARTS
+dbt_project: TACC.DATAMARTS
+dbt_env: dev
+dbt_test_dependency: false
+dbt_run_profile: true
+git_fetch_dependency: true
+check_version_dependency: true
+update_version_dependency: true
+dbt_run:
+- id: datamarts
+  cmd: execute llllldcwew
+dbt_profile:
+- id: datamarts
+  cmd: execute kkkasas
+outlets_dataset: s2://torra-test
+qlik_automation:
+  enabled: false
