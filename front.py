@@ -916,6 +916,20 @@ with aba1:
                         st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Qlik Automation:</div>", unsafe_allow_html=True)
                         st.json(dados_finais['qlik_automation'])
 
+                    if 'pipes' in dados_finais:
+                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Pipes Configurados:</div>", unsafe_allow_html=True)
+                        if isinstance(dados_finais['pipes'], list):
+                            for idx, pipe in enumerate(dados_finais['pipes']):
+                                st.code(yaml.dump(pipe, sort_keys=False, allow_unicode=True), language="yaml")
+                        else:
+                            st.json(dados_finais['pipes'])
+                    if 'file_generation' in dados_finais:
+                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Geração de Arquivos (File Generation):</div>", unsafe_allow_html=True)
+                        if isinstance(dados_finais['file_generation'], (dict, list)):
+                            st.json(dados_finais['file_generation'])
+                        else:
+                            st.info(str(dados_finais['file_generation']))
+
                     bools = {k: v for k, v in dados_finais.items() if isinstance(v, bool)}
                     if bools:
                         st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Dependências e Parâmetros:</div>", unsafe_allow_html=True)
