@@ -927,6 +927,13 @@ with aba1:
                         st.markdown(f"<div>{booleans_html}</div>", unsafe_allow_html=True)
 
                 else:
+                    nome_dag = dados_finais["name"]
+
+                    nome_seguro = re.sub(
+                                r"[^A-Za-z0-9_.-]+",
+                                "_",
+                                nome_dag
+                            )
                     dados_finais["name"] = f"app_executa_dbt_{nome_seguro}"
                     yaml_string = yaml.dump(yaml_dados, sort_keys=False, default_flow_style=False, allow_unicode=True)
                     st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Configuração final compilada:</div>', unsafe_allow_html=True)
@@ -975,13 +982,7 @@ with aba1:
                             # 2. Nome do arquivo
                             # --------------------------------
 
-                            nome_dag = dados_finais["name"]
-
-                            nome_seguro = re.sub(
-                                r"[^A-Za-z0-9_.-]+",
-                                "_",
-                                nome_dag
-                            )
+                        
                             dados_finais["name"] = f"app_executa_dbt_{nome_seguro}"
                             nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
                             if "tags" in dados_finais:
