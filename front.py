@@ -905,8 +905,7 @@ with aba1:
                         st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Tabelas Mapeadas:</div>", unsafe_allow_html=True)
                         tabelas_html = "".join([f"<span style='display: inline-block; background: #1e293b; padding: 4px 10px; margin: 4px 4px 4px 0; border-radius: 4px; font-size: 12px; color: #94a3b8;'>{t}</span>" for t in tabelas])
                         st.markdown(f"<div>{tabelas_html}</div>", unsafe_allow_html=True)
-                    
-                    # IMPORTANTE: Ahora esto está FUERA de la validación "if tabelas:"
+
                     for cmd_key in ['dbt_run', 'dbt_test', 'dbt_profile']:
                         if cmd_key in dados_finais:
                             st.markdown(f"<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>{cmd_key.upper().replace('_', ' ')}:</div>", unsafe_allow_html=True)
@@ -928,6 +927,7 @@ with aba1:
                         st.markdown(f"<div>{booleans_html}</div>", unsafe_allow_html=True)
 
                 else:
+                    dados_finais["name"] = f"app_executa_dbt_{nome_seguro}"
                     yaml_string = yaml.dump(yaml_dados, sort_keys=False, default_flow_style=False, allow_unicode=True)
                     st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Configuração final compilada:</div>', unsafe_allow_html=True)
                     st.code(yaml_string, language="yaml")
