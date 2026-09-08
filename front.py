@@ -210,7 +210,7 @@ def create_field(field,prefix=""):
         for subfield in campos:
             if not campo_visivel(subfield, valor):
                 continue
-            sub_nome, sub_valor = create_field(subfield,prefix=f"{key}_")
+            sub_nome, sub_valor = create_field(subfield)
             valor[sub_nome] = sub_valor
     elif tipo == "object_list":
         valor = []
@@ -220,20 +220,19 @@ def create_field(field,prefix=""):
             f"Quantidade de itens em {label}",
             min_value=0,
             value=0,
-            step=1,
-            key=f"{key}_count")
+            step=1)
         for i in range(quantidade):
             st.markdown(f"#### Pipe {i + 1}")
             item = {}
             table_field = next(
                 f for f in item_fields
-                if f[""] == "table")
+                if f["name"] == "table")
             _, table = create_field(table_field, prefix=f"{key}_{i}_")
             item["table"] = table
 
             schema_field = next(
                 f for f in item_fields
-                if f[""] == "schema")
+                if f["name"] == "schema")
 
             _, schema = create_field(schema_field,prefix=f"{key}_{i}_")
             item["schema"] = schema
@@ -277,8 +276,7 @@ def create_field(field,prefix=""):
             f"Quantidade de comandos em {label}",
             min_value=0,
             value=0,
-            step=1,
-            key=f"{key}_cmd_count"
+            step=1
         )
 
         for i in range(quantidade):
@@ -389,7 +387,7 @@ def get_badge_html(field, value):
 dbt_schema = load_schema("dbt_schema.yaml")
 
 campos_basicos = [
-    "",
+    "name",
     "description",
     "execution_type",
     "owner",
@@ -930,12 +928,6 @@ with aba1:
                         st.markdown(f"<div>{booleans_html}</div>", unsafe_allow_html=True)
 
                 else:
-                    if "name" in dados_finais:
-                        nome_original = str(dados_finais["name"])
-                        if not nome_original.startswith("dbt_config_"):
-                            dados_finais["name"] = f"dbt_config_{nome_original}"
-                    if "tags" in dados_finais and isinstance(dados_finais["tags"], list):
-                        dados_finais["tags"] = [str(tag).strip("'\" ") for tag in dados_finais["tags"]]
                     yaml_string = yaml.dump(yaml_dados, sort_keys=False, default_flow_style=False, allow_unicode=True)
                     st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Configuração final compilada:</div>', unsafe_allow_html=True)
                     st.code(yaml_string, language="yaml")
@@ -982,7 +974,7 @@ with aba1:
                             # --------------------------------
                             # 2. Nome do arquivo
                             # --------------------------------
-                            
+
                             nome_dag = dados_finais["name"]
 
                             nome_seguro = re.sub(
@@ -1024,7 +1016,6 @@ with aba1:
                             st.error(
                                 f"Não foi possível enviar o YAML para o GitHub: {e}"
                             )
-
 
 
 with aba2:
