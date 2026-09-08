@@ -875,7 +875,7 @@ with aba1:
                         "dbt_env": "Ambiente (Env)"
                     }
 
-                    campos_complejos = ['tabelas_para_checar', 'dbt_run', 'dbt_test', 'dbt_profile', 'qlik_automation', 'pipes']
+                    campos_complejos = ['tabelas_para_checar', 'dbt_run', 'dbt_test', 'dbt_profile', 'qlik_automation', 'pipes','file_generation']
                     campos_ignorados = set(campos_principais + campos_complejos)
                     detalhes_existentes = [
                         k for k, v in dados_finais.items() 
