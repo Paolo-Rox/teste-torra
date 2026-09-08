@@ -1,0 +1,16 @@
+name: dbt_config_datamarts.yaml
+execution_type: delta
+owner: Engenharia
+start_date: '2026-09-08'
+tags: '[Homologacao]'
+git_repo_schema: Tac.datamarts
+git_repo_name: git_repo_tn
+dbt_project: taac.tn.dag_gf
+dbt_env: dev
+delta_hours: 1
+module_name: repo_tn_rt
+send_delta_alert: true
+use_plus_selector: false
+pipes:
+- table: t_joyas
+  schema: acc.tg.git_lojyas
