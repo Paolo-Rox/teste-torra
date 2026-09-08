@@ -210,7 +210,7 @@ def create_field(field,prefix=""):
         for subfield in campos:
             if not campo_visivel(subfield, valor):
                 continue
-            sub_nome, sub_valor = create_field(subfield)
+            sub_nome, sub_valor = create_field(subfield,prefix=f"{key}_")
             valor[sub_nome] = sub_valor
     elif tipo == "object_list":
         valor = []
@@ -220,7 +220,8 @@ def create_field(field,prefix=""):
             f"Quantidade de itens em {label}",
             min_value=0,
             value=0,
-            step=1)
+            step=1,
+            key=f"{key}_count")
         for i in range(quantidade):
             st.markdown(f"#### Pipe {i + 1}")
             item = {}
@@ -276,7 +277,8 @@ def create_field(field,prefix=""):
             f"Quantidade de comandos em {label}",
             min_value=0,
             value=0,
-            step=1
+            step=1,
+            key=f"{key}_cmd_count"
         )
 
         for i in range(quantidade):
