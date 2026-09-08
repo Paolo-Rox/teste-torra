@@ -935,7 +935,7 @@ with aba1:
                                 nome_dag
                             )
                     dados_finais["name"] = f"app_executa_dbt_{nome_seguro}"
-                    yaml_string = yaml.dump(yaml_dados, sort_keys=False, default_flow_style=False, allow_unicode=True)
+                    yaml_string = yaml.dump(dados_finais, sort_keys=False, default_flow_style=False, allow_unicode=True)
                     st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Configuração final compilada:</div>', unsafe_allow_html=True)
                     st.code(yaml_string, language="yaml")
 
