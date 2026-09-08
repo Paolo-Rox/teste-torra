@@ -386,8 +386,6 @@ def get_badge_html(field, value):
 #------------- CONFIGURAÇÕES
 dbt_schema = load_schema("dbt_schema.yaml")
 
-GITHUB_TOKEN = "TU_TOKEN"
-
 campos_basicos = [
     "name",
     "description",
