@@ -982,12 +982,15 @@ with aba1:
                                 "_",
                                 nome_dag
                             )
-                            dados_finais["name"] = f"dbt_config_{nome_seguro}.yaml"
+                            dados_finais["name"] = f"app_executa_dbt_{nome_seguro}"
                             nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
                             if "tags" in dados_finais:
-                                if isinstance(dados_finais["tags"], str):
-                                    texto_limpio = dados_finais["tags"].replace("[", "").replace("]", "").replace("'", "").replace('"', "")
-                                    dados_finais["tags"] = [t.strip() for t in texto_limpio.split(",") if t.strip()]
+                                if isinstance(dados_finais["tags"], list):
+                                    elementos = dados_finais["tags"]
+                                else:
+                                    texto_limpio = str(dados_finais["tags"]).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
+                                    elementos = [t.strip() for t in texto_limpio.split(",") if t.strip()]
+                                dados_finais["tags"] = f"[{','.join(elementos)}]"
                             yaml_string = yaml.dump(
                                 dados_finais, 
                                 sort_keys=False, 
