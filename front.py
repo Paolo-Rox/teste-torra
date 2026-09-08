@@ -889,14 +889,14 @@ with aba1:
                         with col_det1:
                             for k in detalhes_existentes[:mitad]:
                                 val = dados_finais[k]
-                                val_str = ", ".join(val) if isinstance(val, list) else str(val)
+                                val_str = ", ".join(str(x) for x in val) if isinstance(val, list) else str(val)
                                 label_text = detalles_map.get(k, k.replace('_', ' ').title())
                                 st.markdown(f"**{label_text}:** {val_str}")
                         
                         with col_det2:
                             for k in detalhes_existentes[mitad:]:
                                 val = dados_finais[k]
-                                val_str = ", ".join(val) if isinstance(val, list) else str(val)
+                                val_str = ", ".join(str(x) for x in val) if isinstance(val, list) else str(val)
                                 label_text = detalles_map.get(k, k.replace('_', ' ').title())
                                 st.markdown(f"**{label_text}:** {val_str}")
 
