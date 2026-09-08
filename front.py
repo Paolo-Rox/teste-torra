@@ -226,13 +226,13 @@ def create_field(field,prefix=""):
             item = {}
             table_field = next(
                 f for f in item_fields
-                if f["name"] == "table")
+                if f[""] == "table")
             _, table = create_field(table_field, prefix=f"{key}_{i}_")
             item["table"] = table
 
             schema_field = next(
                 f for f in item_fields
-                if f["name"] == "schema")
+                if f[""] == "schema")
 
             _, schema = create_field(schema_field,prefix=f"{key}_{i}_")
             item["schema"] = schema
@@ -320,7 +320,7 @@ def validate_fields(schema,values):
     for field in schema["fields"]:
         if not campo_visivel(field, values):
             continue
-        nome = field["name"]
+        nome = field[""]
         if nome not in values:
             continue
         label = field.get("label", nome)
@@ -387,7 +387,7 @@ def get_badge_html(field, value):
 dbt_schema = load_schema("dbt_schema.yaml")
 
 campos_basicos = [
-    "name",
+    "",
     "description",
     "execution_type",
     "owner",
@@ -928,6 +928,10 @@ with aba1:
                         st.markdown(f"<div>{booleans_html}</div>", unsafe_allow_html=True)
 
                 else:
+                    if "name" in dados_finais:
+                        nome_original = str(dados_finais["name"])
+                        if not nome_original.startswith("dbt_config_"):
+                            dados_finais["name"] = f"dbt_config_{nome_original}"
                     yaml_string = yaml.dump(yaml_dados, sort_keys=False, default_flow_style=False, allow_unicode=True)
                     st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Configuração final compilada:</div>', unsafe_allow_html=True)
                     st.code(yaml_string, language="yaml")
@@ -974,7 +978,7 @@ with aba1:
                             # --------------------------------
                             # 2. Nome do arquivo
                             # --------------------------------
-
+                            
                             nome_dag = dados_finais["name"]
 
                             nome_seguro = re.sub(
