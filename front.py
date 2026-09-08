@@ -1012,7 +1012,6 @@ with aba1:
                                 arquivo_url
                             )
 
-                            st.balloons()
                         except Exception as e:
                             st.error(
                                 f"Não foi possível enviar o YAML para o GitHub: {e}"
