@@ -474,28 +474,31 @@ st.markdown(f"""
     .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp p, .stApp label, [data-testid="stMarkdownContainer"] p {{
         color: var(--text-color) !important;
     }}
-    header[data-testid="stHeader"] {
-    background-color: var(--bg-color) !important;
-    }
+    
+    /* 1. Limpiar la barra superior de Streamlit */
+    header[data-testid="stHeader"] {{
+        background-color: var(--bg-color) !important;
+    }}
     
     /* 2. Cambiar fondo y texto de los Inputs, Selectbox y DatePickers */
-    input, [data-baseweb="select"] > div {
+    input, [data-baseweb="select"] > div {{
         background-color: var(--input-bg) !important;
         color: var(--input-text) !important;
         border-color: var(--border-color) !important;
-    }
+    }}
     
     /* 3. Cambiar el fondo del acordeón / desplegable ("Informações gerais") */
-    [data-testid="stExpander"] {
+    [data-testid="stExpander"] {{
         background-color: var(--input-bg) !important;
         border: 1px solid var(--border-color) !important;
-    }
+    }}
     
     /* 4. Color de las opciones emergentes en los Selectbox */
-    [data-baseweb="menu"] {
+    [data-baseweb="menu"] {{
         background-color: var(--input-bg) !important;
         color: var(--input-text) !important;
-    }
+    }}
+    
     .main-title {{
         font-size: 38px;
         font-weight: 700;
