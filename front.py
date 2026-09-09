@@ -122,7 +122,7 @@ def create_field(field,prefix=""):
     key = f"{prefix}input_{nome}" if prefix else f"input_{nome}"
     val_atual = st.session_state.get(key, default)
     badge_html = get_badge_html(field, val_atual)
-    label_html = f'<div style="font-size: 14px; font-weight: 500; margin-bottom: 6px;">{label} {badge_html}</div>'
+    label_html = f'<div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">{label} {badge_html}</div>'
 
     if tipo == "text":
         st.markdown(label_html, unsafe_allow_html=True)
