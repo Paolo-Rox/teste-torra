@@ -1,0 +1,15 @@
+name: app_executa_dbt_d_fsfs_
+execution_type: delta
+owner: Engenharia
+start_date: '2026-09-09'
+git_repo_schema: dvsdv
+git_repo_name: dsvdsv
+dbt_project: sdvdsv
+dbt_env: dev
+delta_hours: 1
+module_name: dsvsdv
+send_delta_alert: false
+use_plus_selector: false
+pipes:
+- table: dsvdsv
+  schema: dsvsdv
