@@ -447,6 +447,27 @@ else:
         --alert-err-bg: linear-gradient(90deg, rgba(254, 226, 226, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
         --alert-succ-bg: linear-gradient(90deg, rgba(220, 252, 231, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
     }
+
+    /* Reglas CSS aplicadas ÚNICAMENTE en modo claro */
+    .stApp, header[data-testid="stHeader"] {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+    }
+    [data-testid="stSidebar"] {
+        background-color: #f8fafc !important;
+    }
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp p, .stApp label, [data-testid="stMarkdownContainer"] p {
+        color: #0f172a !important;
+    }
+    input, [data-baseweb="select"] > div, [data-testid="stExpander"] {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-color: #cbd5e1 !important;
+    }
+    [data-baseweb="menu"] {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+    }
     """
 
 st.markdown(f"""
