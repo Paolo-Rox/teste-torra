@@ -970,10 +970,10 @@ with aba1:
                 else:
                     nome_dag = dados_finais["name"]
 
-                            nome_seguro = re.sub(
-                                        r"[^A-Za-z0-9_.-]+",
-                                        "_",
-                                        nome_dag)
+                    nome_seguro = re.sub(
+                                r"[^A-Za-z0-9_.-]+",
+                                "_",
+                                nome_dag)
                     dados_finais["name"] = f"app_executa_dbt_{nome_seguro}"
                     yaml_string = yaml.dump(dados_finais, sort_keys=False, default_flow_style=False, allow_unicode=True)
                     st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Configuração final compilada:</div>', unsafe_allow_html=True)
