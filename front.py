@@ -423,9 +423,6 @@ with st.sidebar:
 if st.session_state["theme"] == "Escuro":
     theme_css = """
     :root {
-        --input-bg: #1e293b;
-        --input-text: #ffffff;
-        --border-color: #334155;
         --bg-color: #0e1117;
         --sidebar-bg: #161b22;
         --text-color: #f1f5f9;
@@ -440,9 +437,6 @@ if st.session_state["theme"] == "Escuro":
 else:
     theme_css = """
     :root {
-        --input-bg: #f8fafc;
-        --input-text: #0f172a;
-        --border-color: #cbd5e1;
         --bg-color: #ffffff;
         --sidebar-bg: #f8fafc;
         --text-color: #0f172a;
@@ -459,53 +453,13 @@ st.markdown(f"""
 <style>
     {theme_css}
     
-    /* Cambiar el fondo principal y el color de texto global de Streamlit */
-    .stApp {{
-        background-color: var(--bg-color) !important;
-        color: var(--text-color) !important;
-    }}
-    
-    /* Cambiar el fondo de la barra lateral (Sidebar) */
-    [data-testid="stSidebar"] {{
-        background-color: var(--sidebar-bg) !important;
-    }}
-
-    /* Forzar que los textos predeterminados de Streamlit hereden el color del tema */
-    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp p, .stApp label, [data-testid="stMarkdownContainer"] p {{
-        color: var(--text-color) !important;
-    }}
-    
-    /* 1. Limpiar la barra superior de Streamlit */
-    header[data-testid="stHeader"] {{
-        background-color: var(--bg-color) !important;
-    }}
-    
-    /* 2. Cambiar fondo y texto de los Inputs, Selectbox y DatePickers */
-    input, [data-baseweb="select"] > div {{
-        background-color: var(--input-bg) !important;
-        color: var(--input-text) !important;
-        border-color: var(--border-color) !important;
-    }}
-    
-    /* 3. Cambiar el fondo del acordeón / desplegable ("Informações gerais") */
-    [data-testid="stExpander"] {{
-        background-color: var(--input-bg) !important;
-        border: 1px solid var(--border-color) !important;
-    }}
-    
-    /* 4. Color de las opciones emergentes en los Selectbox */
-    [data-baseweb="menu"] {{
-        background-color: var(--input-bg) !important;
-        color: var(--input-text) !important;
-    }}
-    
     .main-title {{
         font-size: 38px;
         font-weight: 700;
         margin-bottom: 0;
     }}
     .main-subtitle {{
-        color: var(--subtitle-color) !important;
+        color: var(--subtitle-color);
         font-size: 16px;
         margin-top: 4px;
         margin-bottom: 25px;
@@ -516,7 +470,7 @@ st.markdown(f"""
         margin-bottom: 2px;
     }}
     .step-description {{
-        color: var(--subtitle-color) !important;
+        color: var(--subtitle-color);
         font-size: 14px;
         margin-bottom: 20px;
     }}
@@ -525,11 +479,14 @@ st.markdown(f"""
         align-items: center;
         gap: 10px;
         margin: 10px 0 25px 0;
-        color: var(--subtitle-color);
+        color: var(--stepper-color);
         font-size: 14px;
     }}
     .step-active {{
         font-weight: 700;
+    }}
+    .step-line {{
+        color: var(--step-line-color);
     }}
     .badge {{
         display: inline-block;
@@ -543,14 +500,17 @@ st.markdown(f"""
     .badge-success {{
         background-color: var(--badge-succ-bg);
         color: var(--badge-succ-text);
+        border: 1px solid var(--badge-succ-border);
     }}
     .badge-danger {{
         background-color: var(--badge-err-bg);
         color: var(--badge-err-text);
+        border: 1px solid var(--badge-err-border);
     }}
     .badge-optional {{
         background-color: var(--badge-opt-bg);
         color: var(--badge-opt-text);
+        border: 1px solid var(--badge-opt-border);
     }}
 </style>
 """, unsafe_allow_html=True)
