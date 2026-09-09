@@ -453,13 +453,29 @@ st.markdown(f"""
 <style>
     {theme_css}
     
+    /* Cambiar el fondo principal y el color de texto global de Streamlit */
+    .stApp {{
+        background-color: var(--bg-color) !important;
+        color: var(--text-color) !important;
+    }}
+    
+    /* Cambiar el fondo de la barra lateral (Sidebar) */
+    [data-testid="stSidebar"] {{
+        background-color: var(--sidebar-bg) !important;
+    }}
+
+    /* Forzar que los textos predeterminados de Streamlit hereden el color del tema */
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp p, .stApp label, [data-testid="stMarkdownContainer"] p {{
+        color: var(--text-color) !important;
+    }}
+
     .main-title {{
         font-size: 38px;
         font-weight: 700;
         margin-bottom: 0;
     }}
     .main-subtitle {{
-        color: var(--subtitle-color);
+        color: var(--subtitle-color) !important;
         font-size: 16px;
         margin-top: 4px;
         margin-bottom: 25px;
@@ -470,7 +486,7 @@ st.markdown(f"""
         margin-bottom: 2px;
     }}
     .step-description {{
-        color: var(--subtitle-color);
+        color: var(--subtitle-color) !important;
         font-size: 14px;
         margin-bottom: 20px;
     }}
@@ -479,14 +495,11 @@ st.markdown(f"""
         align-items: center;
         gap: 10px;
         margin: 10px 0 25px 0;
-        color: var(--stepper-color);
+        color: var(--subtitle-color);
         font-size: 14px;
     }}
     .step-active {{
         font-weight: 700;
-    }}
-    .step-line {{
-        color: var(--step-line-color);
     }}
     .badge {{
         display: inline-block;
@@ -500,17 +513,14 @@ st.markdown(f"""
     .badge-success {{
         background-color: var(--badge-succ-bg);
         color: var(--badge-succ-text);
-        border: 1px solid var(--badge-succ-border);
     }}
     .badge-danger {{
         background-color: var(--badge-err-bg);
         color: var(--badge-err-text);
-        border: 1px solid var(--badge-err-border);
     }}
     .badge-optional {{
         background-color: var(--badge-opt-bg);
         color: var(--badge-opt-text);
-        border: 1px solid var(--badge-opt-border);
     }}
 </style>
 """, unsafe_allow_html=True)
