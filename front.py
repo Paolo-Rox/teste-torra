@@ -423,7 +423,10 @@ with st.sidebar:
 if st.session_state["theme"] == "Escuro":
     theme_css = """
     :root {
-        --subtitle-color: #64748b;
+        --bg-color: #0e1117;
+        --sidebar-bg: #161b22;
+        --text-color: #f1f5f9;
+        --subtitle-color: #94a3b8;
         --badge-succ-bg: #143823; --badge-succ-text: #4ade80;
         --badge-err-bg: #450a0a; --badge-err-text: #f87171;
         --badge-opt-bg: #27272a; --badge-opt-text: #a1a1aa;
@@ -434,6 +437,9 @@ if st.session_state["theme"] == "Escuro":
 else:
     theme_css = """
     :root {
+        --bg-color: #ffffff;
+        --sidebar-bg: #f8fafc;
+        --text-color: #0f172a;
         --subtitle-color: #475569;
         --badge-succ-bg: #dcfce7; --badge-succ-text: #166534;
         --badge-err-bg: #fee2e2; --badge-err-text: #991b1b;
