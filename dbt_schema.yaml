@@ -72,7 +72,7 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Horário utilizado para controlar a execução."
 
   - name: tabelas_para_checar
@@ -81,7 +81,7 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Lista de tabelas que devem ser verificadas antes da execução."
   # ============================================================
   # GIT
@@ -93,8 +93,8 @@ fields:
     required: true
     visible_when:
       execution_type:
-        - delta
-        - datamarts
+        - Atualização Frequente de Dados (Delta / Incremental)
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Schema onde o Git Repository está registrado."
     placeholder: "ex: TACC.DATAMARTS"
 
@@ -104,8 +104,8 @@ fields:
     required: true
     visible_when:
       execution_type:
-        - delta
-        - datamarts
+        - Atualização Frequente de Dados (Delta / Incremental)
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Nome do Git Repository utilizado pela DAG."
     placeholder: "ex: GIT_REPO_TN"
 
@@ -115,8 +115,8 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - delta
-        - datamarts
+        - Atualização Frequente de Dados (Delta / Incremental)
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Caminho dentro do repositório Git utilizado pelo DBT Project."
     placeholder: "ex: TN/DAG_T_LOJAS"
 
@@ -130,8 +130,8 @@ fields:
     required: true
     visible_when:
       execution_type:
-        - delta
-        - datamarts
+        - Atualização Frequente de Dados (Delta / Incremental)
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Nome completo do DBT Project utilizado pela DAG."
     placeholder: "ex: TACC.TN.DAG_DATAMARTS"
 
@@ -145,8 +145,8 @@ fields:
     default: dev
     visible_when:
       execution_type:
-        - delta
-        - datamarts
+        - Atualização Frequente de Dados (Delta / Incremental)
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Ambiente utilizado na execução do DBT."
 
 
@@ -159,10 +159,10 @@ fields:
     type: number
     required_when:
       execution_type:
-        - delta
+        - Atualização Frequente de Dados (Delta / Incremental)
     visible_when:
       execution_type:
-        - delta
+        - Atualização Frequente de Dados (Delta / Incremental)
     min: 1
     description: "Quantidade de horas utilizada no processamento Delta."
 
@@ -172,10 +172,10 @@ fields:
     required: true
     required_when:
       execution_type:
-        - delta
+        - Atualização Frequente de Dados (Delta / Incremental)
     visible_when:
       execution_type:
-        - delta
+        - Atualização Frequente de Dados (Delta / Incremental)
     description: "Nome do módulo relacionado à execução."
 
   - name: send_delta_alert
@@ -185,7 +185,7 @@ fields:
     default: false
     visible_when:
       execution_type:
-        - delta
+        - Atualização Frequente de Dados (Delta / Incremental)
     description: "Define se alertas relacionados ao Delta serão enviados."
 
   - name: use_plus_selector
@@ -195,7 +195,7 @@ fields:
     default: false
     visible_when:
       execution_type:
-        - delta
+        - Atualização Frequente de Dados (Delta / Incremental)
     description: "Adiciona o prefixo '+' aos seletores DBT."
 
   - name: pipes
@@ -203,10 +203,10 @@ fields:
     type: object_list
     required_when:
       execution_type:
-        - delta
+        - Atualização Frequente de Dados (Delta / Incremental)
     visible_when:
       execution_type:
-        - delta
+        - Atualização Frequente de Dados (Delta / Incremental)
     description: "Configuração das tabelas e domínios utilizados pelo processamento Delta."
 
     item_fields:
@@ -246,7 +246,7 @@ fields:
     default: false
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Define se o DBT Test deve ser tratado como dependência obrigatória."
 
   - name: dbt_run_profile
@@ -256,7 +256,7 @@ fields:
     default: false
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Define se a etapa DBT Profile será executada."
 
   - name: git_fetch_dependency
@@ -266,7 +266,7 @@ fields:
     default: true
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Define se a etapa de Git Fetch será executada."
 
   - name: check_version_dependency
@@ -276,7 +276,7 @@ fields:
     default: true
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Define se a verificação da versão do Git será executada."
 
   - name: update_version_dependency
@@ -286,7 +286,7 @@ fields:
     default: true
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Define se a atualização da versão do DBT Project será executada."
 
 
@@ -300,8 +300,8 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - datamarts
-        - dbt_file_generation
+        - Consolidado para Relatórios e BI (Datamarts)
+        - Geração de Arquivo Base / Estrutura (dbt_file_generation)
     description: "Comandos executados na etapa DBT Run."
 
 
@@ -311,8 +311,8 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - datamarts
-        - dbt_file_generation
+        - Consolidado para Relatórios e BI (Datamarts)
+        - Geração de Arquivo Base / Estrutura (dbt_file_generation)
       dbt_test_dependency : true
     description: "Comandos executados na etapa DBT Test."
 
@@ -323,7 +323,7 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
       dbt_run_profile: true
     description: "Comandos executados na etapa DBT Profile."
 
@@ -338,7 +338,7 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Dataset utilizado como outlet da DAG."
     placeholder: "ex: s3://snowflake-trus-ff/datasets/lista_dados.csv"
 
@@ -348,7 +348,7 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - datamarts
+        - Consolidado para Relatórios e BI (Datamarts)
     description: "Configuração da automação Qlik."
 
     fields:
@@ -386,7 +386,7 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - dbt_file_generation
+        - Geração de Arquivo Base / Estrutura (dbt_file_generation)
     description: "Lista de streams que serão verificados."
 
   - name: stream_schema
@@ -394,10 +394,10 @@ fields:
     type: text
     required_when:
       execution_type:
-        - dbt_file_generation
+        - Geração de Arquivo Base / Estrutura (dbt_file_generation)
     visible_when:
       execution_type:
-        - dbt_file_generation
+        - Geração de Arquivo Base / Estrutura (dbt_file_generation)
     description: "Schema onde estão os streams utilizados."
 
 
@@ -407,6 +407,6 @@ fields:
     required: false
     visible_when:
       execution_type:
-        - dbt_file_generation
+        - Geração de Arquivo Base / Estrutura (dbt_file_generation)
     description: "Comandos executados para geração do arquivo."
 
