@@ -717,40 +717,52 @@ with aba1:
             campos_booleans = [f for f in campos_etapa_2 if f.get("type") == "boolean"]
             campos_regulares = [f for f in campos_etapa_2 if f.get("type") != "boolean"]
             tipos_largos = ["text_area", "text_list", "object_list", "command_list"]
-            col1, col2 = st.columns(2)
-            usar_col1 = True
+            campo_avancadas = next((f for f in campos_booleans if["name"] == "avancadas"),None)
+            if campos_booleans:
+                col_bp1, col_bp2 = st.columns(2)
 
-            for field in campos_regulares:
-                tipo = field.get("type")
-                nome_campo = field.get("name", "").lower()
-                is_header = tipo in ["header", "section", "title"] or "qlik" in nome_campo
-                is_largo = ((tipo in tipos_largos) or ("dataset" in nome_campo) or ("tabela" in nome_campo)or ("automation" in nome_campo)or ("token" in nome_campo))
+                for idx, field in enumerate(campos_booleans):
 
-                if is_header:
-                    
-                    usar_col1 = True
-                if is_largo:
-                    nome, valor = create_field(field)
-                    values[nome] = valor
-                else:
-                    target_col = col1 if usar_col1 else col2
+                    target_col = col_bp1 if idx % 2 == 0 else col_bp2
+
                     with target_col:
                         nome, valor = create_field(field)
                         values[nome] = valor
-                    usar_col1 = not usar_col1
-            if campos_booleans:
+            if campo_avancadas:
                 st.markdown("""
-                <div style="font-size: 15px; font-weight: 600; color: #cbd5e1; margin: 28px 0 12px 0; border-top: 1px solid #334155; padding-top: 16px;">
-                    ⚙️ Opções & Dependências
+                <div style="
+                    margin: 24px 0 12px 0;
+                    border-top: 1px solid #334155;
+                    padding-top: 16px;
+                ">
                 </div>
                 """, unsafe_allow_html=True)
-                
-                col_b1, col_b2 = st.columns(2)
-                for idx, field in enumerate(campos_booleans):
-                    target_col = col_b1 if idx % 2 == 0 else col_b2
-                    with target_col:
+
+                nome, valor = create_field(campo_avancadas)
+                values[nome] = valor
+            
+            if values.get("avancadas", False):
+                st.markdown("""<div style="font-size: 30px; font-weight: 600; color: #cbd5e1; margin: 28px 0 28px 0; border-top: 1px solid #334155; padding-top: 16px;">Configuração de Execução</div>""",unsafe_allow_html=True)
+                st.info("💡 Valores customizados: Edite os campos abaixo com os dados customizados.")
+                col1, col2 = st.columns(2)
+                usar_col1 = True
+                for field in campos_regulares:
+                    tipo = field.get("type")
+                    nome_campo = field.get("name", "").lower()
+                    is_header = tipo in ["header", "section", "title"] or "qlik" in nome_campo
+                    is_largo = ((tipo in tipos_largos) or ("dataset" in nome_campo) or ("tabela" in nome_campo)or ("automation" in nome_campo)or ("token" in nome_campo))
+
+                    if is_header:
+                        usar_col1 = True
+                    if is_largo:
                         nome, valor = create_field(field)
                         values[nome] = valor
+                    else:
+                        target_col = col1 if usar_col1 else col2
+                        with target_col:
+                            nome, valor = create_field(field)
+                            values[nome] = valor
+                        usar_col1 = not usar_col1
 
             erros_etapa_2 = validate_fields(dbt_schema, values)
 
