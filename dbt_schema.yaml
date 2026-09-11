@@ -32,16 +32,22 @@ fields:
 
   - name: owner
     label: "Área Responsável"
-    type: text
+    type: select
     required: true
     default: "Engenharia"
+    options:
+      - Comercial
+      - Financeiro
+      - Logística
+      - RH 
+      - Engenharia
     description: "Responsável pela DAG.Caso não seja indicado será por padrão Engenharia"
-    placeholder: "Engenharia"
 
   - name: schedule
-    label: "Schedule"
-    type: text
-    required: false
+    label: "Frequência "
+    type: select
+    required: true
+    options: ["Diário (Madrugada)", "Diário (Manhã)", "Semanal", "Mensal", "Sob Demanda"]
     description: "Agendamento ou origem de dados utilizada pela DAG."
     placeholder: "0 0 * * *"
 
