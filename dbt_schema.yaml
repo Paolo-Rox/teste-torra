@@ -62,7 +62,7 @@ fields:
     type: text
     required: false
     description: "Tags utilizadas para identificar e organizar a DAG."
-    placeholder: "Selecione ou digite palavras para identificar o processo ex: [Homologação,Datamarts,Mensal]"
+    placeholder: "Digite palavras para identificar o processo ex: [Homologação,Datamarts,Mensal]"
   # ============================================================
   #    DATAMARTS
   # ============================================================
