@@ -198,7 +198,7 @@ fields:
         - Atualização Frequente de Dados (Delta / Incremental)
     description: "Adiciona o prefixo '+' aos seletores DBT."
 
-  - name: avançadas
+  - name: avancadas
     label: "Configurações Avançadas"
     type: boolean
     required: false
