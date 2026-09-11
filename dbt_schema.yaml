@@ -7,18 +7,18 @@ fields:
   # ============================================================
 
   - name: name
-    label: "Nome"
+    label: "Nome do Processo"
     type: text
     required: true
     description: "Nome da DAG."
     placeholder: "ex: datamarts"
 
   - name: description
-    label: "Descrição"
+    label: "Descrição do Processo"
     type: text_area
     required: false
     description: "Descrição da finalidade da DAG."
-    placeholder: "Escreva aqui uma breve descrição sobre o que esta DAG faz..."
+    placeholder: "Escreva aqui a finalidade desta automação"
 
   - name: execution_type
     label: "Tipo de execução"
@@ -31,7 +31,7 @@ fields:
     description: "Define o fluxo de execução utilizado pelo DBT Factory."
 
   - name: owner
-    label: "Owner"
+    label: "Área Responsável"
     type: text
     required: true
     default: "Engenharia"
