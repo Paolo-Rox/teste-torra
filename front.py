@@ -547,7 +547,7 @@ with aba1:
             unsafe_allow_html=True)
         st.markdown(
             '<div class="step-description">'
-            'Configure as informações básicas da DAG.'
+            'Configure as informações básicas desta automação .'
             '</div>',
             unsafe_allow_html=True)
         values = {}
