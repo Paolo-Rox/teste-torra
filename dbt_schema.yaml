@@ -21,13 +21,13 @@ fields:
     placeholder: "Escreva aqui a finalidade desta automação"
 
   - name: execution_type
-    label: "Tipo de execução"
+    label: "Tipo de execução da Automação"
     type: select
     required: true
     options:
-      - delta
-      - datamarts
-      - dbt_file_generation
+      - Atualização Frequente de Dados (Delta / Incremental)
+      - Consolidado para Relatórios e BI (Datamarts)
+      - Geração de Arquivo Base / Estrutura (dbt_file_generation)
     description: "Define o fluxo de execução utilizado pelo DBT Factory."
 
   - name: owner
