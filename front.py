@@ -694,7 +694,7 @@ with aba1:
                     values[f["name"]] = f.get("default")
             st.markdown(f"""
                 <div style="margin-bottom: 24px;">
-                    <div class="step-title">2. Configuração de Execução</div>
+                    <div class="step-title">2. Seleção de Ferramentas Configuração de Execução</div>
                     <div style="color: #94a3b8; font-size: 14px; margin-top: 4px;">
                         Configure os parâmetros específicos para a execução: 
                         <span style="
