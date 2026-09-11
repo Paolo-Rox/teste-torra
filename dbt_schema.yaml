@@ -269,7 +269,7 @@ fields:
     label: "Utilizar o Git Fetch"
     type: boolean
     required: false
-    default: true
+    default: false
     visible_when:
       execution_type:
         - Consolidado para Relatórios e BI (Datamarts)
@@ -279,7 +279,7 @@ fields:
     label: "Utilizar o Check Version"
     type: boolean
     required: false
-    default: true
+    default: false
     visible_when:
       execution_type:
         - Consolidado para Relatórios e BI (Datamarts)
@@ -289,7 +289,7 @@ fields:
     label: "Utilizar o Update Version"
     type: boolean
     required: false
-    default: true
+    default: false
     visible_when:
       execution_type:
         - Consolidado para Relatórios e BI (Datamarts)
