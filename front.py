@@ -269,12 +269,14 @@ def create_field(field,prefix=""):
             valor.append(item)
     elif tipo == "command_list":
         valor = []
-
+        minimo = field.get("min", 0)
+        maximo = field.get("max", None)
         st.markdown(f"### **{label}**")
 
         quantidade = st.number_input(
             f"Quantidade de comandos em {label}",
-            min_value=0,
+            min_value=minimo,
+            max_value=maximo,
             value=0,
             step=1
         )
