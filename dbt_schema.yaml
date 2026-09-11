@@ -52,17 +52,17 @@ fields:
     placeholder: "0 0 * * *"
 
   - name: start_date
-    label: "Data de início"
+    label: "Data de Início da Automação"
     type: date
     required: true
     description: "Data a partir da qual a DAG poderá ser executada."
 
   - name: tags
-    label: "Tags"
+    label: "Categorias / Palavras-chave"
     type: text
     required: false
     description: "Tags utilizadas para identificar e organizar a DAG."
-    placeholder: "ex: [Homologação,Datamarts,Snowflake,dbt]"
+    placeholder: "Selecione ou digite palavras para identificar o processo ex: [Homologação,Datamarts,Mensal]"
   # ============================================================
   #    DATAMARTS
   # ============================================================
