@@ -1177,7 +1177,7 @@ with aba1:
                             """
                 st.markdown(f'<div class="rev-pill-row">{pills_html}</div>', unsafe_allow_html=True)
             tem_config_execucao = any(
-                ados_finais.get(c) for c in
+                dados_finais.get(c) for c in
                 ['tabelas_para_checar', 'dbt_run', 'dbt_test', 'dbt_profile', 'qlik_automation', 'pipes', 'file_generation']
                     )
 
