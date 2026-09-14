@@ -585,7 +585,7 @@ st.markdown(f"""
     }}
 </style>
 """, unsafe_allow_html=True)
-aba1 , aba2 = st.tabs(["dbt_factory","file_factory"])
+aba1 , aba2 = st.tabs(["Configuração de Dados","Configuração de Arquivos"])
 
 #------------------- dbt_facotry
 
