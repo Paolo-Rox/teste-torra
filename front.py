@@ -810,8 +810,18 @@ with aba1:
                             nome, valor = create_field(field)
                             values[nome] = valor
                         usar_col1 = not usar_col1
-
-            erros_etapa_2 = validate_fields(dbt_schema, values)
+            tem_avancadas_activo = values.get("avancadas", False)
+            campos_etapa_2_todos = [
+                    f for f in dbt_schema["fields"] 
+                    if f["name"] not in campos_basicos and campo_visivel(f, values)]
+            if not tem_avancadas_activo:
+                campos_para_validar = [
+                    f for f in campos_etapa_2_todos 
+                    if f.get("type") == "boolean" or f["name"] == "avancadas"]
+            else:
+                campos_para_validar = campos_etapa_2_todos
+            esquema_etapa_2 = {"fields": campos_para_validar}
+            erros_etapa_2 = validate_fields(esquema_etapa_2, values)
 
             if erros_etapa_2:
                 itens_erro_html = "".join([f'<li style="margin-bottom: 6px;">{erro}</li>' for erro in erros_etapa_2])
