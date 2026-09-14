@@ -384,7 +384,42 @@ def get_badge_html(field, value):
             return '<span class="badge badge-success">✓ Preenchido</span>'
         else:
             return '<span class="badge badge-optional">Opcional</span>'
-
+def render_stepper(etapa_atual):
+    cor_ativa = "#38bdf8"    
+    cor_inativa = "#1e293b"  
+    cor_texto_ativo = "#ffffff"
+    cor_texto_inativo = "#64748b"
+    def get_style(etapa_item):
+        if etapa_atual >= etapa_item:
+            return cor_ativa, cor_texto_ativo, cor_ativa
+        return cor_inativa, cor_texto_inativo, cor_inativa
+    bg1, txt1, line1 = get_style(1)
+    bg2, txt2, line2 = get_style(2)
+    bg3, txt3, line3 = get_style(3)
+    html = f"""
+    <div style="display: flex; align-items: center; justify-content: space-between; margin: 10px 0 40px 0; font-family: sans-serif; position: relative;">
+        <!-- Línea conectora de fondo -->
+        <div style="position: absolute; top: 20px; left: 15%; right: 15%; height: 3px; background-color: {cor_inativa}; z-index: 0;"></div>
+        <!-- Línea conectora de progreso activa -->
+        <div style="position: absolute; top: 20px; left: 15%; width: { (etapa_atual - 1) * 35 }%; height: 3px; background-color: {cor_ativa}; z-index: 1; transition: width 0.4s ease;"></div>
+        <!-- Etapa 1 -->
+        <div style="display: flex; flex-direction: column; align-items: center; width: 33%; z-index: 2;">
+            <div style="background-color: {bg1}; color: white; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; margin-bottom: 10px; border: 4px solid var(--bg-color); box-shadow: 0 0 0 1px {bg1};">1</div>
+            <div style="color: {txt1}; font-size: 14px; font-weight: 600;">Informações Iniciais</div>
+        </div>
+        <!-- Etapa 2 -->
+        <div style="display: flex; flex-direction: column; align-items: center; width: 33%; z-index: 2;">
+            <div style="background-color: {bg2}; color: white; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; margin-bottom: 10px; border: 4px solid var(--bg-color); box-shadow: 0 0 0 1px {bg2};">2</div>
+            <div style="color: {txt2}; font-size: 14px; font-weight: 600;">Configuração Técnica</div>
+        </div>
+        <!-- Etapa 3 -->
+        <div style="display: flex; flex-direction: column; align-items: center; width: 33%; z-index: 2;">
+            <div style="background-color: {bg3}; color: white; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; margin-bottom: 10px; border: 4px solid var(--bg-color); box-shadow: 0 0 0 1px {bg3};">3</div>
+            <div style="color: {txt3}; font-size: 14px; font-weight: 600;">Revisão Final</div>
+        </div>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
 #------------- CONFIGURAÇÕES
 dbt_schema = load_schema("dbt_schema.yaml")
 
@@ -397,7 +432,17 @@ campos_basicos = [
     "start_date",
     "tags"
 ]
+MAPA_TIPO_EXECUCAO = {
+    "Consolidado para Relatórios e BI (Datamarts)": "datamarts",
+    "Camada de Staging / Raw": "staging",
+    "Transformação Intermediária / Core": "intermediate"}
 
+MAPA_FREQUENCIA_CRON = {
+    "Diário (Madrugada)": "0 2 * * *",
+    "Diário (Início do Dia)": "0 7 * * *",
+    "De Hora em Hora": "0 * * * *",
+    "Semanal (Segunda-feira)": "0 3 * * 1",
+    "Mensal (Dia 1)": "0 3 1 * *"}
 st.set_page_config(
     page_title="TORRA",
     layout="wide")
@@ -417,6 +462,9 @@ if "theme" not in st.session_state:
 
 if "etapa_dbt" not in st.session_state or st.session_state["etapa_dbt"] == "":
     st.session_state["etapa_dbt"] = 1
+    
+if "dbt_values" not in st.session_state:
+    st.session_state["dbt_values"] = {}
 #-------------- FRONT
 
 with st.sidebar:
@@ -542,8 +590,9 @@ aba1 , aba2 = st.tabs(["dbt_factory","file_factory"])
 #------------------- dbt_facotry
 
 with aba1:
-    es_etapa1_activa = st.session_state["etapa_dbt"] == 1
-    with st.expander("1. Informações gerais", expanded=es_etapa1_activa):
+    etapa = st.session_state["etapa_dbt"]
+    render_stepper(etapa)
+    if st.session_state["etapa_dbt"] == 1:
         st.markdown(
             '<div class="step-title">Dados Gerais</div>',
             unsafe_allow_html=True)
@@ -680,12 +729,8 @@ with aba1:
             st.session_state["etapa_dbt"] = 2
             st.rerun()
 
-    es_etapa2_activa = st.session_state["etapa_dbt"] == 2
-    with st.expander("2. Configuração de Execução", expanded=es_etapa2_activa):
-        #--------- step 2
-        if st.session_state["etapa_dbt"] < 2:
-            st.info("🔒 Complete a Etapa 1 e clique em 'Continuar' para habilitar esta seção.")
-        elif st.session_state["etapa_dbt"] >= 2:
+    elif st.session_state["etapa_dbt"] == 2:
+            values = st.session_state["dbt_values"]
             tipo_execucao = values.get("execution_type", "")
 
             for f in dbt_schema["fields"]:
