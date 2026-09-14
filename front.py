@@ -841,226 +841,408 @@ with aba1:
                     st.rerun()
 
     #--------- step 3
-    es_etapa3_activa = st.session_state["etapa_dbt"] == 3
-    with st.expander("3. Analise final", expanded=es_etapa3_activa):
-        if st.session_state["etapa_dbt"] < 3:
-            st.info("🔒 Complete a Etapa 1 , Etapa 2  e clique em 'Continuar' para habilitar esta seção.")
-        elif st.session_state["etapa_dbt"] == 3:
-            if st.session_state["etapa_dbt"] < 3:
-                st.info("🔒 Complete a Etapa 1 e Etapa 2 para habilitar esta seção.")
-            else:
-                
-                st.markdown('<div class="step-title">Revisão e Confirmação</div>', unsafe_allow_html=True)
-                st.markdown('<div style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">Verifique os dados antes de gerar a DAG.</div>', unsafe_allow_html=True)
+    elif st.session_state["etapa_dbt"] == 3:
+        values = st.session_state.get("dbt_values", {})
+        detalhes_map = {
+                    "schedule": "Agendamento",
+                    "tags": "Tags",
+                    "description": "Descrição",
+                    "start_date": "Início",
+                    "limit_time": "Tempo Limite",
+                    "dbt_env": "Ambiente"}
 
-                dados_finais = {}
-                for f in dbt_schema["fields"]:
-                    if not campo_visivel(f, values):
-                        continue
+        st.markdown("""
+                <style>
+                    .rev-header {
+                        display: flex;
+                        align-items: baseline;
+                        justify-content: space-between;
+                        margin-bottom: 4px;
+                    }
+                    .rev-title { font-size: 22px; font-weight: 650; margin: 0; }
+                    .rev-subtitle { color: #94a3b8; font-size: 13.5px; margin: 4px 0 24px 0; }
 
-                    nome_campo = f["name"]
-                    tipo = f["type"]
-                    
-                    # Tomamos el valor directamente del diccionario values
-                    valor = values.get(nome_campo)
+                    /* Cartões principais (nome / tipo / owner) */
+                    .rev-card {
+                        background-color: #131c2e;
+                        border: 1px solid #24304a;
+                        border-radius: 10px;
+                        padding: 16px 18px;
+                        height: 100%;
+                    }
+                    .rev-card-label {
+                        color: #64748b;
+                        font-size: 10.5px;
+                        font-weight: 600;
+                        letter-spacing: 0.6px;
+                        text-transform: uppercase;
+                        margin-bottom: 6px;
+                    }
+                    .rev-card-value {
+                        color: #f1f5f9;
+                        font-size: 15px;
+                        font-weight: 600;
+                        margin: 0;
+                        word-break: break-word;
+                    }
+                    .rev-card-value.accent { color: #38bdf8; }
 
-                    if tipo == "text_list" and isinstance(valor, str):
-                        valor = [linha.strip() for linha in valor.splitlines() if linha.strip()]
-                    elif tipo in ["date", "time"] and valor is not None:
-                        valor = str(valor)
-        
-                    if valor is not None and valor != "" and valor != [] and valor != {}:
-                        dados_finais[nome_campo] = valor
-
-                yaml_dados = dados_finais.copy()
-
-                # 3. Selector de visualización profissional
-                opcao_visao = st.radio(
-                    "Selecione a forma de visualização:",
-                    ["Visão Consolidada", "Estrutura YAML"],
-                    horizontal=True,
-                    label_visibility="collapsed"
-                )
-                
-                st.markdown("<hr style='margin: 10px 0 20px 0; border-color: #334155;'>", unsafe_allow_html=True)
-
-                if opcao_visao == "Visão Consolidada":
-
-                    campos_principais = ["name", "execution_type", "owner"]
-                    cols_activas = [c for c in campos_principais if c in dados_finais]
-                    
-                    if cols_activas:
-                        cols = st.columns(len(cols_activas))
-                        labels_map = {
-                            "name": "NOME DA DAG", 
-                            "execution_type": "TIPO DE EXECUÇÃO", 
-                            "owner": "PROPRIETÁRIO"
-                        }
-                        for idx, campo in enumerate(cols_activas):
-                            with cols[idx]:
-                                color_val = "#38bdf8" if campo == "execution_type" else "#f8fafc"
-                                st.markdown(f"""
-                                <div style="background-color: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #1e293b; height: 100%;">
-                                    <p style="color: #94a3b8; font-size: 11px; margin-bottom: 5px; font-weight: 600;">{labels_map.get(campo, campo.upper())}</p>
-                                    <p style="color: {color_val}; font-size: 15px; font-weight: 600; margin: 0;">{dados_finais[campo]}</p>
-                                </div>
-                                """, unsafe_allow_html=True)
-                        st.write("")
-
-                    detalles_map = {
-                        "schedule": "Agendamento (Schedule)",
-                        "tags": "Tags",
-                        "description": "Descrição",
-                        "start_date": "Início (Start Date)",
-                        "limit_time": "Tempo Limite (Limit Time)",
-                        "dbt_env": "Ambiente (Env)"
+                    .rev-section {
+                        margin-top: 32px;
+                        margin-bottom: 14px;
+                        padding-bottom: 8px;
+                        border-bottom: 1px solid #1e293b;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                    }
+                    .rev-section-title {
+                        color: #cbd5e1;
+                        font-size: 13px;
+                        font-weight: 650;
+                        letter-spacing: 0.4px;
+                        text-transform: uppercase;
+                        margin: 0;
+                    }
+                    .rev-section-count {
+                        color: #64748b;
+                        font-size: 11.5px;
+                        font-weight: 500;
                     }
 
-                    campos_complejos = ['tabelas_para_checar', 'dbt_run', 'dbt_test', 'dbt_profile', 'qlik_automation', 'pipes','file_generation']
-                    campos_ignorados = set(campos_principais + campos_complejos)
-                    detalhes_existentes = [
-                        k for k, v in dados_finais.items() 
+                    /* "Informações Gerais" como lista tipo ficha técnica,
+                       linha por linha, sem caixas — label à esquerda,
+                       valor à direita, separados por um traço fino. */
+                    .rev-dl-row {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: baseline;
+                        gap: 16px;
+                        padding: 9px 2px;
+                        border-bottom: 1px solid #1a2436;
+                    }
+                    .rev-dl-row:last-child { border-bottom: none; }
+                    .rev-dl-label {
+                        color: #64748b;
+                        font-size: 13px;
+                        font-weight: 500;
+                        white-space: nowrap;
+                    }
+                    .rev-dl-value {
+                        color: #e2e8f0;
+                        font-size: 13.5px;
+                        font-weight: 500;
+                        text-align: right;
+                    }
+
+                    /* Títulos de bloco de execução — sem caixa, só uma
+                       barrinha de cor + texto, tipo "kicker". O conteúdo
+                       (st.code, tags) fica solto embaixo, sem fundo extra. */
+                    .rev-exec-title {
+                        display: flex;
+                        align-items: center;
+                        gap: 9px;
+                        margin: 22px 0 10px 0;
+                    }
+                    .rev-exec-bar {
+                        width: 4px;
+                        height: 15px;
+                        border-radius: 2px;
+                        flex-shrink: 0;
+                    }
+                    .rev-exec-text {
+                        font-size: 13px;
+                        font-weight: 650;
+                        letter-spacing: 0.3px;
+                        text-transform: uppercase;
+                        color: #e2e8f0;
+                    }
+                    .rev-exec-count {
+                        color: #64748b;
+                        font-size: 11.5px;
+                        font-weight: 400;
+                        text-transform: none;
+                        letter-spacing: 0;
+                    }
+
+                    .rev-pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+                    .rev-pill {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+                        background-color: #131c2e;
+                        border: 1px solid #1e293b;
+                        border-radius: 6px;
+                        padding: 6px 12px;
+                        font-size: 12.5px;
+                        color: #cbd5e1;
+                    }
+                    .rev-pill-dot {
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        display: inline-block;
+                    }
+                    .rev-pill-dot.on { background-color: #4ade80; }
+                    .rev-pill-dot.off { background-color: #64748b; }
+
+                    .rev-tag {
+                        display: inline-block;
+                        background: #131c2e;
+                        border: 1px solid #1e293b;
+                        padding: 5px 11px;
+                        margin: 0 6px 6px 0;
+                        border-radius: 6px;
+                        font-size: 12px;
+                        color: #cbd5e1;
+                    }
+
+                    /* Blocos de execução (dbt_run, qlik_automation, etc.)
+                       Cada tipo tem uma cor de destaque diferente via --accent,
+                       aplicada na borda esquerda, para não ficar tudo igual. */
+                    .rev-block {
+                        background-color: #10182a;
+                        border: 1px solid #1e293b;
+                        border-left: 3px solid var(--accent, #334155);
+                        border-radius: 8px;
+                        padding: 14px 16px;
+                        margin-bottom: 12px;
+                    }
+                    .rev-block.acc-dbt   { --accent: #38bdf8; }  /* dbt_run / dbt_test / dbt_profile */
+                    .rev-block.acc-qlik  { --accent: #a78bfa; }  /* qlik_automation */
+                    .rev-block.acc-files { --accent: #fbbf24; }  /* pipes / file_generation */
+                    .rev-block.acc-tabs  { --accent: #34d399; }  /* tabelas_para_checar */
+
+                    .rev-block-title {
+                        color: #94a3b8;
+                        font-size: 12px;
+                        font-weight: 650;
+                        letter-spacing: 0.3px;
+                        text-transform: uppercase;
+                        margin-bottom: 10px;
+                    }
+                    .rev-block-title .count {
+                        color: #64748b;
+                        font-weight: 400;
+                        text-transform: none;
+                        letter-spacing: 0;
+                    }
+                </style>
+                """, unsafe_allow_html=True)
+
+        st.markdown("""
+                <div class="rev-header">
+                    <p class="rev-title">Revisão e Confirmação</p>
+                </div>
+                <div class="rev-subtitle">Verifique os dados antes de gerar a DAG.</div>
+                """, unsafe_allow_html=True)
+
+        dados_finais = {}
+        for f in dbt_schema["fields"]:
+            if not campo_visivel(f, values):
+                continue
+
+            nome_campo = f["name"]
+            tipo = f["type"]
+            valor = values.get(nome_campo)
+
+            if tipo == "text_list" and isinstance(valor, str):
+                valor = [linha.strip() for linha in valor.splitlines() if linha.strip()]
+            elif tipo in ["date", "time"] and valor is not None:
+                valor = str(valor)
+
+            if valor is not None and valor != "" and valor != [] and valor != {}:
+                dados_finais[nome_campo] = valor
+        if "name" in dados_finais:
+            nome_seguro = re.sub(r"[^A-Za-z0-9_.-]+", "_", dados_finais["name"])
+            dados_finais["name"] = f"app_executa_dbt_{nome_seguro}"
+        tab_visao, tab_yaml = st.tabs(["Visão Consolidada", "Estrutura YAML"])
+        with tab_visao:
+            campos_principais = ["name", "execution_type", "owner"]
+            cols_activas = [c for c in campos_principais if c in dados_finais]
+
+            if cols_activas:
+                cols = st.columns(len(cols_activas))
+                labels_map = {
+                            "name": "Nome da DAG",
+                            "execution_type": "Tipo de Execução",
+                            "owner": "Proprietário"}
+                for idx, campo in enumerate(cols_activas):
+                    with cols[idx]:
+                        classe_valor = "rev-card-value accent" if campo == "execution_type" else "rev-card-value"
+                        st.markdown(f"""
+                                <div class="rev-card">
+                                    <p class="rev-card-label">{labels_map.get(campo, campo.upper())}</p>
+                                    <p class="{classe_valor}">{dados_finais[campo]}</p></div>
+                                """, unsafe_allow_html=True)
+            campos_complejos = ['tabelas_para_checar', 'dbt_run', 'dbt_test', 'dbt_profile', 'qlik_automation', 'pipes', 'file_generation']
+            campos_ignorados = set(campos_principais + campos_complejos)
+            detalhes_existentes = [
+                        k for k, v in dados_finais.items()
                         if k not in campos_ignorados and not isinstance(v, bool)
                     ]
 
-                    if detalhes_existentes:
-                        col_det1, col_det2 = st.columns(2)
-                        mitad = (len(detalhes_existentes) + 1) // 2
-                        
-                        with col_det1:
-                            for k in detalhes_existentes[:mitad]:
-                                val = dados_finais[k]
-                                val_str = ", ".join(str(x) for x in val) if isinstance(val, list) else str(val)
-                                label_text = detalles_map.get(k, k.replace('_', ' ').title())
-                                st.markdown(f"**{label_text}:** {val_str}")
-                        
-                        with col_det2:
-                            for k in detalhes_existentes[mitad:]:
-                                val = dados_finais[k]
-                                val_str = ", ".join(str(x) for x in val) if isinstance(val, list) else str(val)
-                                label_text = detalles_map.get(k, k.replace('_', ' ').title())
-                                st.markdown(f"**{label_text}:** {val_str}")
+            if detalhes_existentes:
+                st.markdown("""
+                        <div class="rev-section">
+                            <p class="rev-section-title">Informações Gerais</p>
+                        </div>
+                        """, unsafe_allow_html=True)
 
-                    tabelas = dados_finais.get('tabelas_para_checar', [])
-                    if tabelas:
-                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Tabelas Mapeadas:</div>", unsafe_allow_html=True)
-                        tabelas_html = "".join([f"<span style='display: inline-block; background: #1e293b; padding: 4px 10px; margin: 4px 4px 4px 0; border-radius: 4px; font-size: 12px; color: #94a3b8;'>{t}</span>" for t in tabelas])
-                        st.markdown(f"<div>{tabelas_html}</div>", unsafe_allow_html=True)
+                linhas_html = ""
+                for k in detalhes_existentes:
+                    val = dados_finais[k]
+                    val_str = ", ".join(str(x) for x in val) if isinstance(val, list) else str(val)
+                    label_text = detalhes_map.get(k, k.replace('_', ' ').title())
+                    linhas_html += f"""
+                            <div class="rev-dl-row">
+                                <span class="rev-dl-label">{label_text}</span>
+                                <span class="rev-dl-value">{val_str}</span>
+                            </div>
+                            """
+                st.markdown(linhas_html, unsafe_allow_html=True)
 
-                    for cmd_key in ['dbt_run', 'dbt_test', 'dbt_profile']:
-                        if cmd_key in dados_finais:
-                            st.markdown(f"<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>{cmd_key.upper().replace('_', ' ')}:</div>", unsafe_allow_html=True)
-                            for item in dados_finais[cmd_key]:
-                                st.code(f"id: {item.get('id', '')}\ncmd: {item.get('cmd', '')}", language="yaml")
-                    
-                    if 'qlik_automation' in dados_finais:
-                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Qlik Automation:</div>", unsafe_allow_html=True)
-                        st.json(dados_finais['qlik_automation'])
+            bools = {k: v for k, v in dados_finais.items() if isinstance(v, bool)}
+            if bools:
+                st.markdown(f"""
+                        <div class="rev-section">
+                            <p class="rev-section-title">Parâmetros</p>
+                            <span class="rev-section-count">{sum(bools.values())} de {len(bools)} ativos</span>
+                        </div>
+                        """, unsafe_allow_html=True)
 
-                    if 'pipes' in dados_finais:
-                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Pipes Configurados:</div>", unsafe_allow_html=True)
-                        if isinstance(dados_finais['pipes'], list):
-                            for idx, pipe in enumerate(dados_finais['pipes']):
-                                st.code(yaml.dump(pipe, sort_keys=False, allow_unicode=True), language="yaml")
-                        else:
-                            st.json(dados_finais['pipes'])
-                    if 'file_generation' in dados_finais:
-                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Geração de Arquivos (File Generation):</div>", unsafe_allow_html=True)
-                        if isinstance(dados_finais['file_generation'], (dict, list)):
-                            st.json(dados_finais['file_generation'])
-                        else:
-                            st.info(str(dados_finais['file_generation']))
+                pills_html = ""
+                for k, v in bools.items():
+                    dot_class = "on" if v else "off"
+                    status_str = "Ativo" if v else "Inativo"
+                    pills_html += f"""<div class="rev-pill">
+                                <span class="rev-pill-dot {dot_class}"></span>
+                                {k} &middot; {status_str}
+                            </div>
+                            """
+                st.markdown(f'<div class="rev-pill-row">{pills_html}</div>', unsafe_allow_html=True)
+            tem_config_execucao = any(
+                ados_finais.get(c) for c in
+                ['tabelas_para_checar', 'dbt_run', 'dbt_test', 'dbt_profile', 'qlik_automation', 'pipes', 'file_generation']
+                    )
 
-                    bools = {k: v for k, v in dados_finais.items() if isinstance(v, bool)}
-                    if bools:
-                        st.markdown("<div style='margin-top: 20px; color: #cbd5e1; font-weight: 600;'>Dependências e Parâmetros:</div>", unsafe_allow_html=True)
-                        booleans_html = ""
-                        for k, v in bools.items():
-                            status_str = "Ativo" if v else "Inativo"
-                            color = "#4ade80" if v else "#f87171"
-                            booleans_html += f"<div style='margin: 4px 0;'><span style='color: {color}; font-weight: 600;'>[{status_str}]</span> <span style='color: #94a3b8; font-size: 14px;'>{k}</span></div>"
-                        st.markdown(f"<div>{booleans_html}</div>", unsafe_allow_html=True)
+            if tem_config_execucao:
+                st.markdown("""
+                        <div class="rev-section">
+                            <p class="rev-section-title">Configuração de Execução</p>
+                        </div>
+                        """, unsafe_allow_html=True)
 
+                def exec_title(texto, cor, contagem=None):
+                    sufixo = f'<span class="rev-exec-count"> &middot; {contagem}</span>' if contagem is not None else ""
+                    st.markdown(f"""
+                            <div class="rev-exec-title">
+                                <span class="rev-exec-bar" style="background:{cor};"></span>
+                                <span class="rev-exec-text">{texto}{sufixo}</span>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                tabelas = dados_finais.get('tabelas_para_checar', [])
+                if tabelas:
+                    exec_title("Tabelas Mapeadas", "#34d399", len(tabelas))
+                    tabelas_html = "".join([f'<span class="rev-tag">{t}</span>' for t in tabelas])
+                    st.markdown(f"<div>{tabelas_html}</div>", unsafe_allow_html=True)
+
+                for cmd_key in ['dbt_run', 'dbt_test', 'dbt_profile']:
+                    if cmd_key in dados_finais:
+                        qtd = len(dados_finais[cmd_key])
+                        exec_title(cmd_key.replace('_', ' ').title(), "#38bdf8", f"{qtd} comando(s)")
+                        for item in dados_finais[cmd_key]:
+                            st.code(f"id: {item.get('id', '')}\ncmd: {item.get('cmd', '')}", language="yaml")
+
+                if 'qlik_automation' in dados_finais:
+                    exec_title("Qlik Automation", "#a78bfa")
+                    st.code(
+                                yaml.dump(dados_finais['qlik_automation'], sort_keys=False, allow_unicode=True),
+                                language="yaml"
+                            )
+
+                if 'pipes' in dados_finais:
+                    qtd_pipes = len(dados_finais['pipes']) if isinstance(dados_finais['pipes'], list) else 1
+                    exec_title("Pipes Configurados", "#fbbf24", qtd_pipes)
+                    if isinstance(dados_finais['pipes'], list):
+                        for pipe in dados_finais['pipes']:
+                            st.code(yaml.dump(pipe, sort_keys=False, allow_unicode=True), language="yaml")
+                    else:
+                            st.code(yaml.dump(dados_finais['pipes'], sort_keys=False, allow_unicode=True), language="yaml")
+
+                if 'file_generation' in dados_finais:
+                    exec_title("Geração de Arquivos", "#fbbf24")
+                    if isinstance(dados_finais['file_generation'], (dict, list)):
+                        st.code(
+                                    yaml.dump(dados_finais['file_generation'], sort_keys=False, allow_unicode=True),
+                                    language="yaml"
+                                )
+                    else:
+                        st.info(str(dados_finais['file_generation']))
+
+        with tab_yaml:
+            st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Pré-visualização exata do arquivo a ser gerado:</div>', unsafe_allow_html=True)
+            yaml_dados = dados_finais.copy()
+            if "tags" in yaml_dados:
+                if isinstance(yaml_dados["tags"], list):
+                    elementos = yaml_dados["tags"]
                 else:
-                    nome_dag = dados_finais["name"]
+                    texto_limpio = str(yaml_dados["tags"]).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
+                    elementos = [t.strip() for t in texto_limpio.split(",") if t.strip()]
+                yaml_dados["tags"] = f"[{','.join(elementos)}]"
 
-                    nome_seguro = re.sub(
-                                r"[^A-Za-z0-9_.-]+",
-                                "_",
-                                nome_dag)
-                    dados_finais["name"] = f"app_executa_dbt_{nome_seguro}"
-                    yaml_string = yaml.dump(dados_finais, sort_keys=False, default_flow_style=False, allow_unicode=True)
-                    st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Configuração final compilada:</div>', unsafe_allow_html=True)
-                    st.code(yaml_string, language="yaml")
+            yaml_string = yaml.dump(yaml_dados, sort_keys=False, default_flow_style=False, allow_unicode=True)
+            st.code(yaml_string, language="yaml")
 
-                st.markdown("<hr style='margin: 20px 0; border-color: #334155;'>", unsafe_allow_html=True)
-                col_b1, col_b2, col_b3 = st.columns([1, 1, 2])
-                
-                with col_b1:
-                    if st.button("Voltar à Etapa 2", use_container_width=True):
-                        st.session_state["etapa_dbt"] = 2
-                        st.rerun()
-                
-                with col_b3:
-                    if st.button("Confirmar e Gerar DAG", type="primary", use_container_width=True):
-                        try:
-                            owner = "Paolo-Rox"
-                            repo = "teste-torra"
-                            branch = "main"
+        st.markdown("<hr style='margin: 30px 0 20px 0; border-color: #1e293b;'>", unsafe_allow_html=True)
+        col_b1, col_b2, col_b3 = st.columns([1, 1, 2])
 
-                            token = st.secrets["GITHUB_TOKEN"]
+        with col_b1:
+            if st.button("Voltar à Etapa 2", use_container_width=True):
+                st.session_state["etapa_dbt"] = 2
+                st.rerun()
 
-                            # --------------------------------
-                            # 1. Verificar configs_yaml
-                            # --------------------------------
+        with col_b3:
+            if st.button("Confirmar e Gerar DAG", type="primary", use_container_width=True):
+                try:
+                    owner = "Paolo-Rox"
+                    repo = "teste-torra"
+                    branch = "main"
 
-                            configs_existe = verificar_configs_yaml(
+                    token = st.secrets["GITHUB_TOKEN"]
+
+                    configs_existe = verificar_configs_yaml(
                                 owner=owner,
                                 repo=repo,
                                 branch=branch,
                                 token=token
                             )
 
-                            if configs_existe:
-                                st.info(
-                                    "A pasta configs_yaml já existe. "
-                                    "O arquivo será salvo nela."
-                                )
-                            else:
-                                st.info(
-                                    "A pasta configs_yaml não existe. "
-                                    "Ela será criada automaticamente."
-                                )
+                    if configs_existe:
+                        st.info("A pasta configs_yaml já existe. O arquivo será salvo nela.")
+                    else:
+                        st.info("A pasta configs_yaml não existe. Ela será criada automaticamente.")
 
-                            # --------------------------------
-                            # 2. Nome do arquivo
-                            # --------------------------------
-                            nome_dag = dados_finais["name"]
+                    nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
 
-                            nome_seguro = re.sub(
-                                        r"[^A-Za-z0-9_.-]+",
-                                        "_",
-                                        nome_dag)
-                        
-                            dados_finais["name"] = f"app_executa_dbt_{nome_seguro}"
-                            nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
-                            if "tags" in dados_finais:
-                                if isinstance(dados_finais["tags"], list):
-                                    elementos = dados_finais["tags"]
-                                else:
-                                    texto_limpio = str(dados_finais["tags"]).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
-                                    elementos = [t.strip() for t in texto_limpio.split(",") if t.strip()]
-                                dados_finais["tags"] = f"[{','.join(elementos)}]"
-                            yaml_string = yaml.dump(
-                                dados_finais, 
-                                sort_keys=False, 
-                                allow_unicode=True)
-                            # --------------------------------
-                            # 3. Salvar no GitHub
-                            # --------------------------------
+                    dados_envio = dados_finais.copy()
+                    if "tags" in dados_envio:
+                        if isinstance(dados_envio["tags"], list):
+                            elementos = dados_envio["tags"]
+                        else:
+                            texto_limpio = str(dados_envio["tags"]).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
+                            elementos = [t.strip() for t in texto_limpio.split(",") if t.strip()]
+                        dados_envio["tags"] = f"[{','.join(elementos)}]"
 
-                            resultado = salvar_yaml_github(
-                                yaml_string=yaml_string,
+                    final_yaml_string = yaml.dump(
+                                dados_envio,
+                                sort_keys=False,
+                                allow_unicode=True
+                            )
+
+                    resultado = salvar_yaml_github(
+                                yaml_string=final_yaml_string,
                                 owner=owner,
                                 repo=repo,
                                 branch=branch,
@@ -1068,25 +1250,12 @@ with aba1:
                                 token=token
                             )
 
-                            # --------------------------------
-                            # 4. Sucesso
-                            # --------------------------------
+                    arquivo_url = resultado["content"]["html_url"]
+                    st.success("DAG gerada e enviada ao GitHub com sucesso.")
+                    st.link_button("Abrir YAML no GitHub", arquivo_url)
 
-                            arquivo_url = resultado["content"]["html_url"]
-                            st.success(
-                                "DAG gerada e enviada ao GitHub com sucesso!"
-                            )
-
-                            st.link_button(
-                                "Abrir YAML no GitHub",
-                                arquivo_url
-                            )
-
-                        except Exception as e:
-                            st.error(
-                                f"Não foi possível enviar o YAML para o GitHub: {e}"
-                            )
-
+                except Exception as e:
+                    st.error(f"Não foi possível enviar o YAML para o GitHub: {e}")
 
 with aba2:
     
