@@ -1,0 +1,9 @@
+name: app_executa_dbt_dwcvqwecv
+execution_type: Atualização Frequente de Dados (Delta / Incremental)
+owner: Engenharia
+schedule: Diário (Madrugada)
+start_date: '2026-09-15'
+dbt_env: dev
+send_delta_alert: false
+use_plus_selector: true
+avancadas: false
