@@ -14,78 +14,91 @@ def github_headers(token):
     }
 
 def verificar_configs_yaml(owner, repo, branch, token):
-    url = f"https://api.github.com/repos/{owner}/{repo}/git/ref/heads/{branch}"
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/configs_yaml"
+
     response = requests.get(
         url,
         headers=github_headers(token),
-        timeout=20)       
+        params={"ref": branch},
+        timeout=20
+    )
 
     if response.status_code == 200:
-        return response.json()["object"]["sha"]
+        return True
 
     if response.status_code == 404:
         return False
 
     raise RuntimeError(
-        f"Erro ao verificar configs_yaml: {branch}\n"
+        f"Erro ao verificar configs_yaml: "
         f"{response.status_code} - {response.text}"
     )
-    
-def criar_nueva_branch(owner, repo, nova_branch, sha_base, token):
-    url = f"https://api.github.com/repos/{owner}/{repo}/git/refs"
+
+def salvar_yaml_github(
+    yaml_string,
+    owner,
+    repo,
+    branch,
+    nome_arquivo,
+    token
+):
+    caminho = f"configs_yaml/{nome_arquivo}"
+
+    url = (
+        f"https://api.github.com/repos/"
+        f"{owner}/{repo}/contents/{caminho}"
+    )
+
+    headers = github_headers(token)
+
+    # Verifica se o arquivo já existe
+    response_get = requests.get(
+        url,
+        headers=headers,
+        params={"ref": branch},
+        timeout=20
+    )
+
+    sha = None
+
+    if response_get.status_code == 200:
+        sha = response_get.json()["sha"]
+
+    elif response_get.status_code != 404:
+        raise RuntimeError(
+            f"Erro ao verificar arquivo: "
+            f"{response_get.status_code} - {response_get.text}"
+        )
+
+    # Converte YAML para Base64
+    conteudo_base64 = base64.b64encode(
+        yaml_string.encode("utf-8")
+    ).decode("utf-8")
+
     payload = {
-        "ref": f"refs/heads/{nova_branch}",
-        "sha": sha_base
-    }
-    resp = requests.post(url, headers=github_headers(token), json=payload, timeout=20)
-    if resp.status_code not in (201, 422):  # 422 si la rama ya existe
-        raise RuntimeError(f"Erro ao criar branch {nova_branch}: {resp.status_code} - {resp.text}")
-
-def criar_pull_request(owner, repo, branch_destino, nova_branch, titulo, token):
-    url = f"https://api.github.com/repos/{owner}/{repo}/pulls"
-    payload = {
-        "title": titulo,
-        "head": nova_branch,
-        "base": branch_destino,
-        "body": "DAG enviada automaticamente via interface Streamlit."
-    }
-    resp = requests.post(url, headers=github_headers(token), json=payload, timeout=20)
-    if resp.status_code == 201:
-        return resp.json()["html_url"]
-    raise RuntimeError(f"Erro ao criar Pull Request: {resp.status_code} - {resp.text}")
-
-def salvar_yaml_github(yaml_string, owner, repo, branch_main, nome_arquivo, token):
-    nome_limpo = nome_arquivo.replace(".yaml", "").replace(".yml", "")
-    nova_branch = f"feature/{nome_limpo}"
-    caminho = f"dags/configs_yaml/{nome_arquivo}"
-
-    # 2. Obtener SHA base de main y crear rama temporal
-    sha_main = verificar_configs_yaml(owner, repo, branch_main, token)
-    criar_nueva_branch(owner, repo, nova_branch, sha_main, token)
-
-    # 3. Subir el YAML a la nueva rama
-    url_conteudo = f"https://api.github.com/repos/{owner}/{repo}/contents/{caminho}"
-    conteudo_base64 = base64.b64encode(yaml_string.encode("utf-8")).decode("utf-8")
-    
-    payload_put = {
         "message": f"feat: adicionar {nome_arquivo}",
         "content": conteudo_base64,
-        "branch": nova_branch
+        "branch": branch
     }
 
-    resp_put = requests.put(url_conteudo, headers=github_headers(token), json=payload_put, timeout=20)
-    if resp_put.status_code not in (200, 201):
-        raise RuntimeError(f"Erro ao salvar YAML na branch {nova_branch}: {resp_put.status_code} - {resp_put.text}")
+    # Se já existe, GitHub exige o SHA
+    if sha:
+        payload["sha"] = sha
 
-    # 4. Generar y devolver el link del Pull Request hacia main
-    return criar_pull_request(
-        owner=owner,
-        repo=repo,
-        branch_destino=branch_main,
-        nova_branch=nova_branch,
-        titulo=f"feat: adicionar {nome_arquivo}",
-        token=token
+    response_put = requests.put(
+        url,
+        headers=headers,
+        json=payload,
+        timeout=20
     )
+
+    if response_put.status_code not in (200, 201):
+        raise RuntimeError(
+            f"Erro ao salvar YAML no GitHub: "
+            f"{response_put.status_code} - {response_put.text}"
+        )
+
+    return response_put.json()
 
 def load_schema(caminho):
 
@@ -1248,14 +1261,26 @@ with aba1:
         with col_b3:
             if st.button("Confirmar e Gerar DAG", type="primary", use_container_width=True):
                 try:
-                    owner = "Torra-Cartoes"
-                    repo = "airflow-v3-hml"
+                    owner = "Paolo-Rox"
+                    repo = "teste-torra"
                     branch = "main"
-        
+
                     token = st.secrets["GITHUB_TOKEN"]
+
+                    configs_existe = verificar_configs_yaml(
+                                owner=owner,
+                                repo=repo,
+                                branch=branch,
+                                token=token
+                            )
+
+                    if configs_existe:
+                        st.info("A pasta configs_yaml já existe. O arquivo será salvo nela.")
+                    else:
+                        st.info("A pasta configs_yaml não existe. Ela será criada automaticamente.")
+
                     nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
-        
-                    # Formateo de datos
+
                     dados_envio = dados_finais.copy()
                     if "tags" in dados_envio:
                         if isinstance(dados_envio["tags"], list):
@@ -1264,25 +1289,25 @@ with aba1:
                             texto_limpio = str(dados_envio["tags"]).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
                             elementos = [t.strip() for t in texto_limpio.split(",") if t.strip()]
                         dados_envio["tags"] = f"[{','.join(elementos)}]"
-        
+
                     final_yaml_string = yaml.dump(
-                        dados_envio,
-                        sort_keys=False,
-                        allow_unicode=True
-                    )
-        
-                    # Envío vía Pull Request
-                    pr_url = salvar_yaml_github(
-                        yaml_string=final_yaml_string,
-                        owner=owner,
-                        repo=repo,
-                        branch_main=branch,
-                        nome_arquivo=nome_arquivo,
-                        token=token
-                    )
-        
-                    st.success("DAG gerada com sucesso! Um Pull Request foi criado no GitHub.")
-                    st.link_button("Abrir Pull Request no GitHub", pr_url)
+                                dados_envio,
+                                sort_keys=False,
+                                allow_unicode=True
+                            )
+
+                    resultado = salvar_yaml_github(
+                                yaml_string=final_yaml_string,
+                                owner=owner,
+                                repo=repo,
+                                branch=branch,
+                                nome_arquivo=nome_arquivo,
+                                token=token
+                            )
+
+                    arquivo_url = resultado["content"]["html_url"]
+                    st.success("DAG gerada e enviada ao GitHub com sucesso.")
+                    st.link_button("Abrir YAML no GitHub", arquivo_url)
 
                 except Exception as e:
                     st.error(f"Não foi possível enviar o YAML para o GitHub: {e}")
