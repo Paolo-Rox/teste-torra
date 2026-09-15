@@ -60,7 +60,7 @@ def salvar_yaml_github(yaml_string, owner, repo, branch_main, nome_arquivo, toke
     caminho = f"dags/configs_yaml/{nome_arquivo}"
 
     # 2. Obtener SHA base de main y crear rama temporal
-    sha_main = obtener_sha_main(owner, repo, branch_main, token)
+    sha_main = verificar_configs_yaml(owner, repo, branch_main, token)
     criar_nueva_branch(owner, repo, nova_branch, sha_main, token)
 
     # 3. Subir el YAML a la nueva rama
