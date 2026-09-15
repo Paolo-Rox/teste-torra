@@ -14,23 +14,45 @@ def github_headers(token):
     }
 
 def verificar_configs_yaml(owner, repo, branch, token):
+    url = f"https://api.github.com/repos/{owner}/{repo}/git/ref/heads/{branch}"
     response = requests.get(
-        url = f"https://api.github.com/repos/{owner}/{repo}/contents/dags/configs_yaml",
+        url,
         headers=github_headers(token),
-        params={"ref": branch},
-        timeout=20
-    )
+        timeout=20)       
 
     if response.status_code == 200:
-        return True
+        return resp.json()["object"]["sha"]
 
     if response.status_code == 404:
         return False
 
     raise RuntimeError(
-        f"Erro ao verificar configs_yaml: "
+        f"Erro ao verificar configs_yaml: {branch}\n"
         f"{response.status_code} - {response.text}"
     )
+    
+def criar_nueva_branch(owner, repo, nova_branch, sha_base, token):
+    url = f"https://api.github.com/repos/{owner}/{repo}/git/refs"
+    payload = {
+        "ref": f"refs/heads/{nova_branch}",
+        "sha": sha_base
+    }
+    resp = requests.post(url, headers=github_headers(token), json=payload, timeout=20)
+    if resp.status_code not in (201, 422):  # 422 si la rama ya existe
+        raise RuntimeError(f"Erro ao criar branch {nova_branch}: {resp.status_code} - {resp.text}")
+
+def criar_pull_request(owner, repo, branch_destino, nova_branch, titulo, token):
+    url = f"https://api.github.com/repos/{owner}/{repo}/pulls"
+    payload = {
+        "title": titulo,
+        "head": nova_branch,
+        "base": branch_destino,
+        "body": "DAG enviada automaticamente via interface Streamlit."
+    }
+    resp = requests.post(url, headers=github_headers(token), json=payload, timeout=20)
+    if resp.status_code == 201:
+        return resp.json()["html_url"]
+    raise RuntimeError(f"Erro ao criar Pull Request: {resp.status_code} - {resp.text}")
 
 def salvar_yaml_github(
     yaml_string,
@@ -40,63 +62,34 @@ def salvar_yaml_github(
     nome_arquivo,
     token
 ):
+    nome_limpo = nome_arquivo.replace(".yaml", "").replace(".yml", "")
+    nova_branch = f"feature/{nome_limpo}"
     caminho = f"dags/configs_yaml/{nome_arquivo}"
 
-    url = (
-        f"https://api.github.com/repos/"
-        f"{owner}/{repo}/contents/{caminho}"
-    )
+    sha_main = verificar_configs_yaml(owner, repo, branch_main, token)
+    criar_nueva_branch(owner, repo, nova_branch, sha_main, token)
 
-    headers = github_headers(token)
-
-    # Verifica se o arquivo já existe
-    response_get = requests.get(
-        url,
-        headers=headers,
-        params={"ref": branch},
-        timeout=20
-    )
-
-    sha = None
-
-    if response_get.status_code == 200:
-        sha = response_get.json()["sha"]
-
-    elif response_get.status_code != 404:
-        raise RuntimeError(
-            f"Erro ao verificar arquivo: "
-            f"{response_get.status_code} - {response_get.text}"
-        )
-
-    # Converte YAML para Base64
-    conteudo_base64 = base64.b64encode(
-        yaml_string.encode("utf-8")
-    ).decode("utf-8")
-
-    payload = {
+    url_conteudo = f"https://api.github.com/repos/{owner}/{repo}/contents/{caminho}"
+    conteudo_base64 = base64.b64encode(yaml_string.encode("utf-8")).decode("utf-8")
+    
+    payload_put = {
         "message": f"feat: adicionar {nome_arquivo}",
         "content": conteudo_base64,
-        "branch": branch
+        "branch": nova_branch
     }
 
-    # Se já existe, GitHub exige o SHA
-    if sha:
-        payload["sha"] = sha
+    resp_put = requests.put(url_conteudo, headers=github_headers(token), json=payload_put, timeout=20)
+    if resp_put.status_code not in (200, 201):
+        raise RuntimeError(f"Erro ao salvar YAML na branch {nova_branch}: {resp_put.status_code} - {resp_put.text}")
 
-    response_put = requests.put(
-        url,
-        headers=headers,
-        json=payload,
-        timeout=20
+    return criar_pull_request(
+        owner=owner,
+        repo=repo,
+        branch_destino=branch_main,
+        nova_branch=nova_branch,
+        titulo=f"feat: adicionar {nome_arquivo}",
+        token=token
     )
-
-    if response_put.status_code not in (200, 201):
-        raise RuntimeError(
-            f"Erro ao salvar YAML no GitHub: "
-            f"{response_put.status_code} - {response_put.text}"
-        )
-
-    return response_put.json()
 
 def load_schema(caminho):
 
