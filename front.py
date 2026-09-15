@@ -1355,7 +1355,14 @@ with aba1:
                     token = st.secrets["GITHUB_TOKEN"]
                     nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
                     dados_envio = dados_finais.copy()
-
+                    if "tags" in dados_envio:
+                        if isinstance(dados_envio["tags"], list):
+                            elementos = dados_envio["tags"]
+                        else:
+                            texto_limpio = str(dados_envio["tags"]).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
+                            elementos = [t.strip() for t in texto_limpio.split(",") if t.strip()]
+                        dados_envio["tags"] = f"[{','.join(elementos)}]"
+                        
                     final_yaml_string = yaml.dump(
                         dados_envio,
                         sort_keys=False,
@@ -1381,33 +1388,6 @@ with aba1:
                     else:
                         st.info("A pasta configs_yaml não existe. Ela será criada automaticamente.")
 
-                    nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
-
-                    dados_envio = dados_finais.copy()
-                    if "tags" in dados_envio:
-                        if isinstance(dados_envio["tags"], list):
-                            elementos = dados_envio["tags"]
-                        else:
-                            texto_limpio = str(dados_envio["tags"]).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
-                            elementos = [t.strip() for t in texto_limpio.split(",") if t.strip()]
-                        dados_envio["tags"] = f"[{','.join(elementos)}]"
-
-                    final_yaml_string = yaml.dump(
-                                dados_envio,
-                                sort_keys=False,
-                                allow_unicode=True
-                            )
-
-                    resultado = salvar_yaml_github(
-                                yaml_string=final_yaml_string,
-                                owner=owner,
-                                repo=repo,
-                                branch=branch,
-                                nome_arquivo=nome_arquivo,
-                                token=token
-                            )
-
-                    arquivo_url = resultado["content"]["html_url"]
                     st.success("DAG gerada e enviada ao GitHub com sucesso.")
                     st.link_button("Abrir YAML no GitHub",pr_url)
 
