@@ -17,7 +17,7 @@ def verificar_configs_yaml(owner, repo, branch, token):
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/configs_yaml"
 
     response = requests.get(
-        url,
+        url = f"https://api.github.com/repos/{owner}/{repo}/contents/dags/configs_yaml",
         headers=github_headers(token),
         params={"ref": branch},
         timeout=20
@@ -42,7 +42,7 @@ def salvar_yaml_github(
     nome_arquivo,
     token
 ):
-    caminho = f"configs_yaml/{nome_arquivo}"
+    caminho = f"dags/configs_yaml/{nome_arquivo}"
 
     url = (
         f"https://api.github.com/repos/"
@@ -1261,8 +1261,8 @@ with aba1:
         with col_b3:
             if st.button("Confirmar e Gerar DAG", type="primary", use_container_width=True):
                 try:
-                    owner = "Paolo-Rox"
-                    repo = "teste-torra"
+                    owner = "Torra-Cartoes"
+                    repo = "airflow-v3-hml"
                     branch = "main"
 
                     token = st.secrets["GITHUB_TOKEN"]
