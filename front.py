@@ -13,62 +13,53 @@ def github_headers(token):
         "X-GitHub-Api-Version": "2026-03-10",
     }
 
-def verificar_acesso_repo(owner, repo, token):
-    url = f"https://api.github.com/repos/{owner}/{repo}"
+def obtener_sha_branch(owner, repo, branch, token):
+    """Obtém o SHA do último commit de uma branch."""
+    url = f"https://api.github.com/repos/{owner}/{repo}/git/ref/heads/{branch}"
 
     response = requests.get(
         url,
         headers=github_headers(token),
-        timeout=20
-    )
-
-    if response.status_code != 200:
-        raise RuntimeError(
-            f"Erro ao acessar repositório: "
-            f"{response.status_code} - {response.text}"
-        )
-
-    return response.json()
-
-def verificar_usuario(token):
-    url = "https://api.github.com/user"
-
-    response = requests.get(
-        url,
-        headers=github_headers(token),
-        timeout=20
-    )
-
-    if response.status_code != 200:
-        raise RuntimeError(
-            f"Erro ao verificar usuário: "
-            f"{response.status_code} - {response.text}"
-        )
-
-    return response.json()["login"]
-
-def verificar_configs_yaml(owner, repo, branch, token):
-    url = f"https://api.github.com/repos/{owner}/{repo}/contents/configs_yaml"
-
-    response = requests.get(
-        url,
-        headers=github_headers(token),
-        params={"ref": branch},
-        timeout=20
-    )
+        timeout=20)
 
     if response.status_code == 200:
-        return True
-
-    if response.status_code == 404:
-        return False
+        return response.json()["object"]["sha"]
 
     raise RuntimeError(
-        f"Erro ao verificar configs_yaml: "
+        f"Erro ao obter SHA da branch {branch}: "
+        f"{response.status_code} - {response.text}")
+
+def criar_nova_branch(owner, repo, nova_branch, sha_base, token):
+    """Cria uma nova branch baseada no SHA informado."""
+
+    url = f"https://api.github.com/repos/{owner}/{repo}/git/refs"
+
+    payload = {
+        "ref": f"refs/heads/{nova_branch}",
+        "sha": sha_base
+    }
+
+    response = requests.post(
+        url,
+        headers=github_headers(token),
+        json=payload,
+        timeout=20
+    )
+
+    if response.status_code == 201:
+        return True
+
+    if response.status_code == 422:
+        raise RuntimeError(
+            f"A branch {nova_branch} já existe no GitHub."
+        )
+
+    raise RuntimeError(
+        f"Erro ao criar branch {nova_branch}: "
         f"{response.status_code} - {response.text}"
     )
 
-def salvar_yaml_github(
+def salvar_yaml_na_branch(
     yaml_string,
     owner,
     repo,
@@ -76,35 +67,13 @@ def salvar_yaml_github(
     nome_arquivo,
     token
 ):
-    caminho = f"configs_yaml/{nome_arquivo}"
+    caminho = f"dags/configs_yaml/{nome_arquivo}"
 
     url = (
         f"https://api.github.com/repos/"
         f"{owner}/{repo}/contents/{caminho}"
     )
 
-    headers = github_headers(token)
-
-    # Verifica se o arquivo já existe
-    response_get = requests.get(
-        url,
-        headers=headers,
-        params={"ref": branch},
-        timeout=20
-    )
-
-    sha = None
-
-    if response_get.status_code == 200:
-        sha = response_get.json()["sha"]
-
-    elif response_get.status_code != 404:
-        raise RuntimeError(
-            f"Erro ao verificar arquivo: "
-            f"{response_get.status_code} - {response_get.text}"
-        )
-
-    # Converte YAML para Base64
     conteudo_base64 = base64.b64encode(
         yaml_string.encode("utf-8")
     ).decode("utf-8")
@@ -115,26 +84,108 @@ def salvar_yaml_github(
         "branch": branch
     }
 
-    # Se já existe, GitHub exige o SHA
-    if sha:
-        payload["sha"] = sha
-
-    response_put = requests.put(
+    response = requests.put(
         url,
-        headers=headers,
+        headers=github_headers(token),
         json=payload,
         timeout=20
     )
 
-    if response_put.status_code not in (200, 201):
+    if response.status_code not in (200, 201):
         raise RuntimeError(
-            f"Erro ao salvar YAML no GitHub: "
-            f"{response_put.status_code} - {response_put.text}\n"
-            f"Permissões aceitas: "
-            f"{response_put.headers.get('X-Accepted-GitHub-Permissions')}"
+            f"Erro ao salvar YAML na branch {branch}: "
+            f"{response.status_code} - {response.text}"
         )
 
-    return response_put.json()
+    return response.json()
+
+def criar_pull_request(
+    owner,
+    repo,
+    branch_destino,
+    nova_branch,
+    titulo,
+    token
+):
+    url = f"https://api.github.com/repos/{owner}/{repo}/pulls"
+
+    payload = {
+        "title": titulo,
+        "head": nova_branch,
+        "base": branch_destino,
+        "body": "DAG enviada automaticamente via interface Streamlit."
+    }
+
+    response = requests.post(
+        url,
+        headers=github_headers(token),
+        json=payload,
+        timeout=20
+    )
+
+    if response.status_code == 201:
+        return response.json()["html_url"]
+
+    raise RuntimeError(
+        f"Erro ao criar Pull Request: "
+        f"{response.status_code} - {response.text}"
+    )
+
+def salvar_yaml_github(
+    yaml_string,
+    owner,
+    repo,
+    branch_main,
+    nome_arquivo,
+    token
+):
+    # 1. Criar nome único para a branch
+    nome_limpo = (
+        nome_arquivo
+        .replace(".yaml", "")
+        .replace(".yml", "")
+    )
+
+    nova_branch = f"feature/{nome_limpo}"
+
+    # 2. Obter SHA atual da main
+    sha_main = obtener_sha_branch(
+        owner=owner,
+        repo=repo,
+        branch=branch_main,
+        token=token
+    )
+
+    # 3. Criar branch baseada na main
+    criar_nova_branch(
+        owner=owner,
+        repo=repo,
+        nova_branch=nova_branch,
+        sha_base=sha_main,
+        token=token
+    )
+
+    # 4. Salvar YAML na branch nova
+    resultado = salvar_yaml_na_branch(
+        yaml_string=yaml_string,
+        owner=owner,
+        repo=repo,
+        branch=nova_branch,
+        nome_arquivo=nome_arquivo,
+        token=token
+    )
+
+    # 5. Criar Pull Request para main
+    pr_url = criar_pull_request(
+        owner=owner,
+        repo=repo,
+        branch_destino=branch_main,
+        nova_branch=nova_branch,
+        titulo=f"feat: adicionar {nome_arquivo}",
+        token=token
+    )
+
+    return pr_url
 
 def load_schema(caminho):
 
@@ -1302,15 +1353,21 @@ with aba1:
                     branch = "main"
 
                     token = st.secrets["GITHUB_TOKEN"]
-                    usuario = verificar_usuario(token)
-                    st.write(f"Usuário autenticado: {usuario}")
-                    repo_info = verificar_acesso_repo(
-                        owner="Torra-Cartoes",
-                        repo="airflow-v3-hml",
-                        token=token
-                    )
-                    
-                    st.write("Repositório acessível:", repo_info["full_name"])
+                    nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
+                    dados_envio = dados_finais.copy()
+
+                    final_yaml_string = yaml.dump(
+                        dados_envio,
+                        sort_keys=False,
+                        allow_unicode=True)
+
+                    pr_url = salvar_yaml_github(
+                        yaml_string=final_yaml_string,
+                        owner=owner,
+                        repo=repo,
+                        branch_main=branch,
+                        nome_arquivo=nome_arquivo,
+                        token=token)
 
                     configs_existe = verificar_configs_yaml(
                                 owner=owner,
@@ -1352,7 +1409,7 @@ with aba1:
 
                     arquivo_url = resultado["content"]["html_url"]
                     st.success("DAG gerada e enviada ao GitHub com sucesso.")
-                    st.link_button("Abrir YAML no GitHub", arquivo_url)
+                    st.link_button("Abrir YAML no GitHub",pr_url)
 
                 except Exception as e:
                     st.error(f"Não foi possível enviar o YAML para o GitHub: {e}")
