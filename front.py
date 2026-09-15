@@ -1334,18 +1334,6 @@ with aba1:
                         nome_arquivo=nome_arquivo,
                         token=token)
 
-                    configs_existe = verificar_configs_yaml(
-                                owner=owner,
-                                repo=repo,
-                                branch=branch,
-                                token=token
-                            )
-
-                    if configs_existe:
-                        st.info("A pasta configs_yaml já existe. O arquivo será salvo nela.")
-                    else:
-                        st.info("A pasta configs_yaml não existe. Ela será criada automaticamente.")
-
                     st.success("DAG gerada e enviada ao GitHub com sucesso.")
                     st.warning(
                         "A DAG foi adicionada à branch "
