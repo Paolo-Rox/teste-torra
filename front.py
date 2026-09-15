@@ -13,6 +13,23 @@ def github_headers(token):
         "X-GitHub-Api-Version": "2026-03-10",
     }
 
+def verificar_usuario(token):
+    url = "https://api.github.com/user"
+
+    response = requests.get(
+        url,
+        headers=github_headers(token),
+        timeout=20
+    )
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Erro ao verificar usuário: "
+            f"{response.status_code} - {response.text}"
+        )
+
+    return response.json()["login"]
+
 def verificar_configs_yaml(owner, repo, branch, token):
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/configs_yaml"
 
@@ -95,7 +112,9 @@ def salvar_yaml_github(
     if response_put.status_code not in (200, 201):
         raise RuntimeError(
             f"Erro ao salvar YAML no GitHub: "
-            f"{response_put.status_code} - {response_put.text}"
+            f"{response_put.status_code} - {response_put.text}\n"
+            f"Permissões aceitas: "
+            f"{response_put.headers.get('X-Accepted-GitHub-Permissions')}"
         )
 
     return response_put.json()
@@ -1261,12 +1280,14 @@ with aba1:
         with col_b3:
             if st.button("Confirmar e Gerar DAG", type="primary", use_container_width=True):
                 try:
-                    owner = "Paolo-Rox"
-                    repo = "teste-torra"
+                    owner = "Torra-Cartoes"
+                    repo = "airflow-v3-hml"
                     branch = "main"
 
                     token = st.secrets["GITHUB_TOKEN"]
-
+                    usuario = verificar_usuario(token)
+                    st.write(f"Usuário autenticado: {usuario}")
+                    
                     configs_existe = verificar_configs_yaml(
                                 owner=owner,
                                 repo=repo,
