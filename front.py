@@ -1255,23 +1255,11 @@ with aba1:
                     owner = "Torra-Cartoes"
                     repo = "airflow-v3-hml"
                     branch = "main"
-
+        
                     token = st.secrets["GITHUB_TOKEN"]
-
-                    configs_existe = verificar_configs_yaml(
-                                owner=owner,
-                                repo=repo,
-                                branch=branch,
-                                token=token
-                            )
-
-                    if configs_existe:
-                        st.info("A pasta configs_yaml já existe. O arquivo será salvo nela.")
-                    else:
-                        st.info("A pasta configs_yaml não existe. Ela será criada automaticamente.")
-
                     nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
-
+        
+                    # Formateo de datos
                     dados_envio = dados_finais.copy()
                     if "tags" in dados_envio:
                         if isinstance(dados_envio["tags"], list):
@@ -1280,25 +1268,25 @@ with aba1:
                             texto_limpio = str(dados_envio["tags"]).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
                             elementos = [t.strip() for t in texto_limpio.split(",") if t.strip()]
                         dados_envio["tags"] = f"[{','.join(elementos)}]"
-
+        
                     final_yaml_string = yaml.dump(
-                                dados_envio,
-                                sort_keys=False,
-                                allow_unicode=True
-                            )
-
-                    resultado = salvar_yaml_github(
-                                yaml_string=final_yaml_string,
-                                owner=owner,
-                                repo=repo,
-                                branch=branch,
-                                nome_arquivo=nome_arquivo,
-                                token=token
-                            )
-
-                    arquivo_url = resultado["content"]["html_url"]
-                    st.success("DAG gerada e enviada ao GitHub com sucesso.")
-                    st.link_button("Abrir YAML no GitHub", arquivo_url)
+                        dados_envio,
+                        sort_keys=False,
+                        allow_unicode=True
+                    )
+        
+                    # Envío vía Pull Request
+                    pr_url = salvar_yaml_via_pr(
+                        yaml_string=final_yaml_string,
+                        owner=owner,
+                        repo=repo,
+                        branch_main=branch,
+                        nome_arquivo=nome_arquivo,
+                        token=token
+                    )
+        
+                    st.success("DAG gerada com sucesso! Um Pull Request foi criado no GitHub.")
+                    st.link_button("Abrir Pull Request no GitHub", pr_url)
 
                 except Exception as e:
                     st.error(f"Não foi possível enviar o YAML para o GitHub: {e}")
