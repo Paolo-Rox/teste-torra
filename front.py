@@ -13,6 +13,23 @@ def github_headers(token):
         "X-GitHub-Api-Version": "2026-03-10",
     }
 
+def verificar_acesso_repo(owner, repo, token):
+    url = f"https://api.github.com/repos/{owner}/{repo}"
+
+    response = requests.get(
+        url,
+        headers=github_headers(token),
+        timeout=20
+    )
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Erro ao acessar repositório: "
+            f"{response.status_code} - {response.text}"
+        )
+
+    return response.json()
+
 def verificar_usuario(token):
     url = "https://api.github.com/user"
 
@@ -1287,7 +1304,14 @@ with aba1:
                     token = st.secrets["GITHUB_TOKEN"]
                     usuario = verificar_usuario(token)
                     st.write(f"Usuário autenticado: {usuario}")
+                    repo_info = verificar_acesso_repo(
+                        owner="Torra-Cartoes",
+                        repo="airflow-v3-hml",
+                        token=token
+                    )
                     
+                    st.write("Repositório acessível:", repo_info["full_name"])
+
                     configs_existe = verificar_configs_yaml(
                                 owner=owner,
                                 repo=repo,
