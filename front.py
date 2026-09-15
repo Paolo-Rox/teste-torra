@@ -99,38 +99,6 @@ def salvar_yaml_na_branch(
 
     return response.json()
 
-def criar_pull_request(
-    owner,
-    repo,
-    branch_destino,
-    nova_branch,
-    titulo,
-    token
-):
-    url = f"https://api.github.com/repos/{owner}/{repo}/pulls"
-
-    payload = {
-        "title": titulo,
-        "head": nova_branch,
-        "base": branch_destino,
-        "body": "DAG enviada automaticamente via interface Streamlit."
-    }
-
-    response = requests.post(
-        url,
-        headers=github_headers(token),
-        json=payload,
-        timeout=20
-    )
-
-    if response.status_code == 201:
-        return response.json()["html_url"]
-
-    raise RuntimeError(
-        f"Erro ao criar Pull Request: "
-        f"{response.status_code} - {response.text}"
-    )
-
 def salvar_yaml_github(
     yaml_string,
     owner,
@@ -139,53 +107,43 @@ def salvar_yaml_github(
     nome_arquivo,
     token
 ):
-    # 1. Criar nome único para a branch
-    nome_limpo = (
-        nome_arquivo
-        .replace(".yaml", "")
-        .replace(".yml", "")
-    )
+    nova_branch = "feature/torra-validacao-factory"
 
-    nova_branch = f"feature/{nome_limpo}"
-
-    # 2. Obter SHA atual da main
     sha_main = obtener_sha_branch(
         owner=owner,
         repo=repo,
         branch=branch_main,
-        token=token
-    )
+        token=token)
+    url_branch = (
+        f"https://api.github.com/repos/"
+        f"{owner}/{repo}/git/ref/heads/{nova_branch}")
 
-    # 3. Criar branch baseada na main
-    criar_nova_branch(
-        owner=owner,
-        repo=repo,
-        nova_branch=nova_branch,
-        sha_base=sha_main,
-        token=token
-    )
+    response = requests.get(
+        url_branch,
+        headers=github_headers(token),
+        timeout=20)
+    if response.status_code == 404:
+        criar_nova_branch(
+            owner=owner,
+            repo=repo,
+            nova_branch=nova_branch,
+            sha_base=sha_main,
+            token=token)
+    elif response.status_code != 200:
+        raise RuntimeError(
+            f"Erro ao verificar branch: "
+            f"{response.status_code} - {response.text}")
 
     # 4. Salvar YAML na branch nova
-    resultado = salvar_yaml_na_branch(
+    salvar_yaml_na_branch(
         yaml_string=yaml_string,
         owner=owner,
         repo=repo,
         branch=nova_branch,
         nome_arquivo=nome_arquivo,
-        token=token
-    )
+        token=token)
 
-    # 5. Criar Pull Request para main
-    pr_url = criar_pull_request(
-        owner=owner,
-        repo=repo,
-        branch_destino=branch_main,
-        nova_branch=nova_branch,
-        titulo=f"feat: adicionar {nome_arquivo}",
-        token=token
-    )
-
-    return pr_url
+    return nova_branch
 
 def load_schema(caminho):
 
@@ -1368,7 +1326,7 @@ with aba1:
                         sort_keys=False,
                         allow_unicode=True)
 
-                    pr_url = salvar_yaml_github(
+                    branch_resultado = salvar_yaml_github(
                         yaml_string=final_yaml_string,
                         owner=owner,
                         repo=repo,
@@ -1389,7 +1347,13 @@ with aba1:
                         st.info("A pasta configs_yaml não existe. Ela será criada automaticamente.")
 
                     st.success("DAG gerada e enviada ao GitHub com sucesso.")
-                    st.link_button("Abrir YAML no GitHub",pr_url)
+                    st.warning(
+                        "A DAG foi adicionada à branch "
+                        f"`{branch_resultado}`. "
+                        "Para que ela seja incluída na `main` e disponibilizada "
+                        "para o Airflow, é necessário realizar o merge manualmente "
+                        "no GitHub.")
+                    st.link_button("Abrir YAML no GitHub",branch_resultado)
 
                 except Exception as e:
                     st.error(f"Não foi possível enviar o YAML para o GitHub: {e}")
