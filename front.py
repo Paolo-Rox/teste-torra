@@ -54,21 +54,16 @@ def criar_pull_request(owner, repo, branch_destino, nova_branch, titulo, token):
         return resp.json()["html_url"]
     raise RuntimeError(f"Erro ao criar Pull Request: {resp.status_code} - {resp.text}")
 
-def salvar_yaml_github(
-    yaml_string,
-    owner,
-    repo,
-    branch,
-    nome_arquivo,
-    token
-):
+def salvar_yaml_github(yaml_string, owner, repo, branch_main, nome_arquivo, token):
     nome_limpo = nome_arquivo.replace(".yaml", "").replace(".yml", "")
     nova_branch = f"feature/{nome_limpo}"
     caminho = f"dags/configs_yaml/{nome_arquivo}"
 
-    sha_main = verificar_configs_yaml(owner, repo, branch_main, token)
+    # 2. Obtener SHA base de main y crear rama temporal
+    sha_main = obtener_sha_main(owner, repo, branch_main, token)
     criar_nueva_branch(owner, repo, nova_branch, sha_main, token)
 
+    # 3. Subir el YAML a la nueva rama
     url_conteudo = f"https://api.github.com/repos/{owner}/{repo}/contents/{caminho}"
     conteudo_base64 = base64.b64encode(yaml_string.encode("utf-8")).decode("utf-8")
     
@@ -82,6 +77,7 @@ def salvar_yaml_github(
     if resp_put.status_code not in (200, 201):
         raise RuntimeError(f"Erro ao salvar YAML na branch {nova_branch}: {resp_put.status_code} - {resp_put.text}")
 
+    # 4. Generar y devolver el link del Pull Request hacia main
     return criar_pull_request(
         owner=owner,
         repo=repo,
