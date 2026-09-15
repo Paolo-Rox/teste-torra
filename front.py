@@ -1276,7 +1276,7 @@ with aba1:
                     )
         
                     # Envío vía Pull Request
-                    pr_url = salvar_yaml_via_pr(
+                    pr_url = salvar_yaml_github(
                         yaml_string=final_yaml_string,
                         owner=owner,
                         repo=repo,
