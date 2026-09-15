@@ -14,8 +14,6 @@ def github_headers(token):
     }
 
 def verificar_configs_yaml(owner, repo, branch, token):
-    url = f"https://api.github.com/repos/{owner}/{repo}/contents/configs_yaml"
-
     response = requests.get(
         url = f"https://api.github.com/repos/{owner}/{repo}/contents/dags/configs_yaml",
         headers=github_headers(token),
