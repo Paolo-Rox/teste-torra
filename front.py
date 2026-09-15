@@ -21,7 +21,7 @@ def verificar_configs_yaml(owner, repo, branch, token):
         timeout=20)       
 
     if response.status_code == 200:
-        return resp.json()["object"]["sha"]
+        return response.json()["object"]["sha"]
 
     if response.status_code == 404:
         return False
