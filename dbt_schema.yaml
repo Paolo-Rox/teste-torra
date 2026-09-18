@@ -47,7 +47,7 @@ fields:
     label: "Frequência "
     type: select
     required: true
-    options: ["Diário (Madrugada)", "Diário (Manhã)", "Semanal", "Mensal", "Sob Demanda"]
+    options: ["Diário (Madrugada)", "Diário (Manhã)", "Semanal", "Mensal", "Manualmente"]
     description: "Agendamento ou origem de dados utilizada pela DAG."
     placeholder: "0 0 * * *"
 
