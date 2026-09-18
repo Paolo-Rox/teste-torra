@@ -483,9 +483,8 @@ MAPA_TIPO_EXECUCAO = {
     "Geração de Arquivo Base / Estrutura (dbt_file_generation)": "dbt_file_generation"}
 
 MAPA_FREQUENCIA_CRON = {
-    "Diário (Manhã)": "0 7 * * *",
     "Diário (Madrugada)": "0 2 * * *",
-    "Diário (Início do Dia)": "0 7 * * *",
+    "Diário (Manhã)": "0 7 * * *",
     "De Hora em Hora": "0 * * * *",
     "Semanal (Segunda-feira)": "0 3 * * 1",
     "Mensal (Dia 1)": "0 3 1 * *"
