@@ -479,8 +479,8 @@ campos_basicos = [
 ]
 MAPA_TIPO_EXECUCAO = {
     "Consolidado para Relatórios e BI (Datamarts)": "datamarts",
-    "Camada de Staging / Raw": "staging",
-    "Transformação Intermediária / Core": "intermediate"}
+    "Atualização Frequente de Dados (Delta / Incremental)": "delta",
+    "Geração de Arquivo Base / Estrutura (dbt_file_generation)": "dbt_file_generation"}
 
 MAPA_FREQUENCIA_CRON = {
     "Diário (Madrugada)": "0 2 * * *",
@@ -1284,6 +1284,15 @@ with aba1:
         with tab_yaml:
             st.markdown('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Pré-visualização exata do arquivo a ser gerado:</div>', unsafe_allow_html=True)
             yaml_dados = dados_finais.copy()
+            if "execution_type" in yaml_dados:
+                yaml_dados["execution_type"] = MAPA_TIPO_EXECUCAO.get(
+                    yaml_dados["execution_type"],
+                    yaml_dados["execution_type"])
+            
+            if "schedule" in yaml_dados:
+                yaml_dados["schedule"] = MAPA_FREQUENCIA_CRON.get(
+                    yaml_dados["schedule"],
+                    yaml_dados["schedule"])
             if "tags" in yaml_dados:
                 if isinstance(yaml_dados["tags"], list):
                     elementos = yaml_dados["tags"]
@@ -1313,6 +1322,14 @@ with aba1:
                     token = st.secrets["GITHUB_TOKEN"]
                     nome_arquivo = f"dbt_config_{nome_seguro}.yaml"
                     dados_envio = dados_finais.copy()
+                    if "execution_type" in dados_envio:
+                        dados_envio["execution_type"] = MAPA_TIPO_EXECUCAO.get(
+                            dados_envio["execution_type"],
+                            dados_envio["execution_type"])
+                    if "schedule" in dados_envio:
+                        dados_envio["schedule"] = MAPA_FREQUENCIA_CRON.get(
+                            dados_envio["schedule"],
+                            dados_envio["schedule"])
                     if "tags" in dados_envio:
                         if isinstance(dados_envio["tags"], list):
                             elementos = dados_envio["tags"]
