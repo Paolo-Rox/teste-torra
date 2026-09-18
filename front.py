@@ -488,8 +488,8 @@ MAPA_FREQUENCIA_CRON = {
     "Diário (Início do Dia)": "0 7 * * *",
     "De Hora em Hora": "0 * * * *",
     "Semanal (Segunda-feira)": "0 3 * * 1",
-    "Mensal (Dia 1)": "0 3 1 * *",
-    "Manualmente" : None}
+    "Mensal (Dia 1)": "0 3 1 * *"
+}
 st.set_page_config(
     page_title="TORRA",
     layout="wide")
@@ -1292,9 +1292,12 @@ with aba1:
                     yaml_dados["execution_type"])
             
             if "schedule" in yaml_dados:
-                yaml_dados["schedule"] = MAPA_FREQUENCIA_CRON.get(
-                    yaml_dados["schedule"],
-                    yaml_dados["schedule"])
+                if yaml_dados["schedule"] == "Manualmente":
+                    del yaml_dados["schedule"]
+                else:
+                    yaml_dados["schedule"] = MAPA_FREQUENCIA_CRON.get(
+                        yaml_dados["schedule"],
+                        yaml_dados["schedule"])
             if "tags" in yaml_dados:
                 if isinstance(yaml_dados["tags"], list):
                     elementos = yaml_dados["tags"]
